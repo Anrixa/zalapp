@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "."
+      ]
+    },
+    "github": {
+      "command": "uvx",
+      "args": [
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+      }
+    }
+  }
+}
