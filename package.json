@@ -1,0 +1,30 @@
+{
+  "name": "zal",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Zal — book the hall, skip the phone calls. Cross-platform venue booking for the Armenian market.",
+  "packageManager": "pnpm@9.12.3",
+  "engines": { "node": ">=20.11" },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "db:migrate": "pnpm --filter @zal/api exec prisma migrate dev",
+    "db:push": "pnpm --filter @zal/api exec prisma db push",
+    "db:seed": "pnpm --filter @zal/api run db:seed",
+    "db:studio": "pnpm --filter @zal/api exec prisma studio"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}
