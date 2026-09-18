@@ -1,0 +1,678 @@
+// Zal — database schema
+//
+// Conventions used throughout:
+//   • Money is stored as whole AMD in Int columns. The dram has no subunit in
+//     practice and no float ever touches a price.
+//   • Event dates are calendar dates (@db.Date), not instants: a wedding on
+//     26 September is on 26 September in every time zone.
+//   • Everything user-facing soft-deletes or archives rather than disappearing,
+//     because bookings and payments have to stay auditable.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/* ── Enums (mirrored one-for-one in @zal/contracts) ─────────────────────── */
+
+enum UserRole {
+  GUEST
+  HOST
+  ADMIN
+}
+
+enum Locale {
+  hy
+  en
+  ru
+}
+
+enum Currency {
+  AMD
+  USD
+  EUR
+}
+
+enum VenueType {
+  BANQUET_HALL
+  RESTAURANT
+  GARDEN
+  ROOFTOP
+  CORPORATE
+  OUTDOOR
+}
+
+enum VenueStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  ARCHIVED
+}
+
+enum TimeSlot {
+  AFTERNOON
+  EVENING
+}
+
+enum EventType {
+  WEDDING
+  BAPTISM
+  BIRTHDAY
+  ANNIVERSARY
+  ENGAGEMENT
+  CORPORATE
+  OTHER
+}
+
+enum AvailabilityStatus {
+  OPEN
+  HELD
+  BOOKED
+  BLOCKED
+}
+
+enum BookingStatus {
+  DRAFT
+  AWAITING_DEPOSIT
+  PENDING_HOST
+  CONFIRMED
+  COMPLETED
+  CANCELLED_BY_GUEST
+  CANCELLED_BY_HOST
+  DECLINED
+  EXPIRED
+}
+
+enum PaymentProvider {
+  CARD
+  IDRAM
+  TELCELL
+  BANK_TRANSFER
+}
+
+enum PaymentKind {
+  DEPOSIT
+  BALANCE
+  REFUND
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMED
+  BOOKING_DECLINED
+  BOOKING_CANCELLED
+  BALANCE_DUE
+  PAYMENT_RECEIVED
+  MESSAGE_RECEIVED
+  PRICE_DROP
+  REVIEW_PUBLISHED
+  EVENT_REMINDER
+}
+
+enum AmenityCode {
+  PARKING
+  CATERING
+  SOUND_DJ
+  OUTDOOR_TERRACE
+  AIR_CONDITIONING
+  DANCE_FLOOR
+  PHOTOGRAPHY_ALLOWED
+  WHEELCHAIR_ACCESS
+  KIDS_AREA
+  SMOKING_AREA
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum VerificationPurpose {
+  LOGIN
+  VERIFY_PHONE
+  RESET_PASSWORD
+}
+
+/* ── Identity ───────────────────────────────────────────────────────────── */
+
+model User {
+  id           String    @id @default(cuid())
+  fullName     String    @db.VarChar(120)
+  phone        String    @unique @db.VarChar(20)
+  email        String?   @unique @db.VarChar(160)
+  passwordHash String?
+  googleId     String?   @unique
+  avatarUrl    String?
+  role         UserRole  @default(GUEST)
+  locale       Locale    @default(hy)
+  currency     Currency  @default(AMD)
+
+  phoneVerifiedAt DateTime?
+  emailVerifiedAt DateTime?
+
+  // Account deletion is a request with a grace period, not an instant wipe:
+  // bookings and payments still have to be reconcilable afterwards.
+  deletionRequestedAt DateTime?
+  deletedAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  hostProfile             HostProfile?
+  refreshTokens           RefreshToken[]
+  verificationCodes       VerificationCode[]
+  devices                 Device[]
+  paymentMethods          PaymentMethod[]
+  bookings                Booking[]
+  reviews                 Review[]
+  favorites               Favorite[]
+  notifications           Notification[]
+  notificationPreference  NotificationPreference?
+  sentMessages            Message[]            @relation("MessageSender")
+  guestConversations      Conversation[]       @relation("ConversationGuest")
+
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model HostProfile {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  displayName           String  @db.VarChar(120)
+  bio                   String? @db.VarChar(2000)
+  respondsWithinMinutes Int?
+  memberSince           Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venues        Venue[]
+  conversations Conversation[] @relation("ConversationHost")
+
+  @@map("host_profiles")
+}
+
+/// One row per issued refresh token. Rotation replaces the row and points the
+/// old one at its successor, so replaying a spent token is detectable and
+/// revokes the whole family rather than just failing.
+model RefreshToken {
+  id          String    @id @default(cuid())
+  userId      String
+  /// SHA-256 of the token. A database dump must not be a set of live sessions.
+  tokenHash   String    @unique
+  /// Session family: every rotation of one device's token shares this id.
+  familyId    String
+  expiresAt   DateTime
+  usedAt      DateTime?
+  revokedAt   DateTime?
+  replacedById String?
+  userAgent   String?   @db.VarChar(300)
+  ip          String?   @db.VarChar(64)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+/// A pending SMS code. The code itself is stored hashed; only its id travels
+/// back and forth, so the phone number is sent exactly once.
+model VerificationCode {
+  id        String              @id @default(cuid())
+  userId    String?
+  phone     String              @db.VarChar(20)
+  codeHash  String
+  purpose   VerificationPurpose
+  attempts  Int                 @default(0)
+  expiresAt DateTime
+  consumedAt DateTime?
+  lastSentAt DateTime           @default(now())
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([phone, purpose])
+  @@index([expiresAt])
+  @@map("verification_codes")
+}
+
+model Device {
+  id         String         @id @default(cuid())
+  userId     String
+  pushToken  String         @unique @db.VarChar(512)
+  platform   DevicePlatform
+  deviceName String?        @db.VarChar(120)
+  appVersion String?        @db.VarChar(32)
+  lastSeenAt DateTime       @default(now())
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("devices")
+}
+
+model NotificationPreference {
+  userId     String   @id
+  push       Boolean  @default(true)
+  sms        Boolean  @default(true)
+  email      Boolean  @default(false)
+  priceDrops Boolean  @default(true)
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+/// A card or wallet on file. Only the provider's token and the display digits
+/// are stored — never a PAN, never a CVC.
+model PaymentMethod {
+  id            String          @id @default(cuid())
+  userId        String
+  provider      PaymentProvider
+  brand         String          @db.VarChar(32)
+  last4         String?         @db.VarChar(4)
+  expiryMonth   Int?
+  expiryYear    Int?
+  providerToken String          @db.VarChar(512)
+  isDefault     Boolean         @default(false)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([userId])
+  @@map("payment_methods")
+}
+
+/* ── Venues ─────────────────────────────────────────────────────────────── */
+
+model Venue {
+  id            String      @id @default(cuid())
+  slug          String      @unique @db.VarChar(160)
+  hostProfileId String
+  name          String      @db.VarChar(160)
+  type          VenueType
+  status        VenueStatus @default(PUBLISHED)
+  description   String      @db.VarChar(4000)
+
+  addressLine String  @db.VarChar(160)
+  district    String  @db.VarChar(80)
+  city        String  @db.VarChar(80)
+  country     String  @default("AM") @db.VarChar(2)
+  lat         Float?
+  lng         Float?
+
+  capacityMin  Int?
+  capacityMax  Int
+  areaSqm      Int?
+  parkingSpots Int?
+
+  /// Deposit share of the total, per venue. Defaults to the platform's 20%.
+  depositRate Float @default(0.2)
+
+  /// Denormalised so search can sort by rating without a join-and-aggregate on
+  /// every query. Recomputed whenever a review lands.
+  ratingAvg   Float?
+  reviewCount Int    @default(0)
+  savedCount  Int    @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  host         HostProfile         @relation(fields: [hostProfileId], references: [id], onDelete: Cascade)
+  images       VenueImage[]
+  amenities    VenueAmenity[]
+  prices       VenuePrice[]
+  availability VenueAvailability[]
+  addOns       AddOn[]
+  bookings     Booking[]
+  reviews      Review[]
+  favorites    Favorite[]
+  conversations Conversation[]
+
+  @@index([status, city])
+  @@index([type])
+  @@index([ratingAvg])
+  @@map("venues")
+}
+
+model VenueImage {
+  id       String  @id @default(cuid())
+  venueId  String
+  url      String
+  blurhash String? @db.VarChar(64)
+  width    Int?
+  height   Int?
+  position Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, position])
+  @@map("venue_images")
+}
+
+model VenueAmenity {
+  venueId String
+  code    AmenityCode
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@id([venueId, code])
+  @@index([code])
+  @@map("venue_amenities")
+}
+
+/// Base price per slot, with an optional weekend price. A specific date can
+/// still override both through VenueAvailability.priceAmd.
+model VenuePrice {
+  id              String   @id @default(cuid())
+  venueId         String
+  slot            TimeSlot
+  priceAmd        Int
+  weekendPriceAmd Int?
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, slot])
+  @@map("venue_prices")
+}
+
+/// One row per venue/date/slot that differs from the default — a blocked day, a
+/// held or booked slot, or a one-off price. Absence of a row means "open at the
+/// standard price", so a venue with an empty calendar is bookable by default
+/// instead of invisible.
+model VenueAvailability {
+  id       String             @id @default(cuid())
+  venueId  String
+  date     DateTime           @db.Date
+  slot     TimeSlot
+  status   AvailabilityStatus @default(OPEN)
+  priceAmd Int?
+  /// Set while a booking holds the slot; cleared when it is cancelled.
+  bookingId String?
+  note     String?            @db.VarChar(200)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@unique([venueId, date, slot])
+  @@index([venueId, date])
+  @@index([date, status])
+  @@map("venue_availability")
+}
+
+model AddOn {
+  id          String  @id @default(cuid())
+  venueId     String
+  code        String  @db.VarChar(64)
+  name        String  @db.VarChar(120)
+  description String? @db.VarChar(400)
+  priceAmd    Int
+  mandatory   Boolean @default(false)
+  position    Int     @default(0)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  venue         Venue          @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  bookingAddOns BookingAddOn[]
+
+  @@unique([venueId, code])
+  @@map("add_ons")
+}
+
+/* ── Bookings and money ─────────────────────────────────────────────────── */
+
+model Booking {
+  id         String        @id @default(cuid())
+  ref        String        @unique @db.VarChar(32)
+  venueId    String
+  userId     String
+  status     BookingStatus @default(DRAFT)
+
+  eventDate  DateTime  @db.Date
+  slot       TimeSlot
+  guestCount Int
+  eventType  EventType @default(OTHER)
+  note       String?   @db.VarChar(1000)
+
+  // The quote, frozen at the moment of booking. Prices change; a signed
+  // agreement does not, so every component is stored rather than recomputed.
+  rentalAmd     Int
+  addOnsTotalAmd Int @default(0)
+  discountAmd   Int @default(0)
+  subtotalAmd   Int
+  serviceFeeAmd Int
+  totalAmd      Int
+  depositAmd    Int
+  balanceAmd    Int
+  paidAmd       Int @default(0)
+  refundedAmd   Int @default(0)
+  currency      Currency @default(AMD)
+
+  balanceDueOn          DateTime @db.Date
+  freeCancellationUntil DateTime @db.Date
+
+  promoCode String? @db.VarChar(32)
+
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+  cancelReason String?  @db.VarChar(500)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  venue        Venue          @relation(fields: [venueId], references: [id])
+  user         User           @relation(fields: [userId], references: [id])
+  addOns       BookingAddOn[]
+  payments     Payment[]
+  review       Review?
+  conversation Conversation?
+
+  @@index([userId, status])
+  @@index([venueId, eventDate])
+  @@index([status, eventDate])
+  @@map("bookings")
+}
+
+model BookingAddOn {
+  id        String @id @default(cuid())
+  bookingId String
+  addOnId   String
+  /// Copied, not joined: an add-on renamed or repriced later must not rewrite
+  /// what the guest agreed to.
+  name      String @db.VarChar(120)
+  priceAmd  Int
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  addOn   AddOn   @relation(fields: [addOnId], references: [id])
+
+  @@unique([bookingId, addOnId])
+  @@map("booking_add_ons")
+}
+
+model Payment {
+  id              String          @id @default(cuid())
+  bookingId       String
+  paymentMethodId String?
+  kind            PaymentKind
+  provider        PaymentProvider
+  status          PaymentStatus   @default(PENDING)
+  amountAmd       Int
+  currency        Currency        @default(AMD)
+
+  providerRef String? @db.VarChar(120)
+  failureCode String? @db.VarChar(64)
+  /// Raw provider payload, kept for reconciliation and dispute handling.
+  providerPayload Json?
+
+  /// Repeat of the same key returns the existing payment instead of charging twice.
+  idempotencyKey String? @unique @db.VarChar(64)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  settledAt DateTime?
+
+  booking       Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  paymentMethod PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("payments")
+}
+
+model PromoCode {
+  id           String    @id @default(cuid())
+  code         String    @unique @db.VarChar(32)
+  label        String    @db.VarChar(120)
+  discountAmd  Int
+  maxRedemptions Int?
+  redemptions  Int       @default(0)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  active       Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@map("promo_codes")
+}
+
+/* ── Social ─────────────────────────────────────────────────────────────── */
+
+/// Reviews come from completed bookings only — the one-to-one link to Booking
+/// is what makes "from real bookings" on the venue page true by construction.
+model Review {
+  id        String    @id @default(cuid())
+  venueId   String
+  userId    String
+  bookingId String    @unique
+  rating    Int
+  body      String?   @db.VarChar(2000)
+  hostReply String?   @db.VarChar(1000)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  venue   Venue   @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([venueId, createdAt])
+  @@map("reviews")
+}
+
+model Favorite {
+  userId  String
+  venueId String
+
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  venue Venue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+
+  @@id([userId, venueId])
+  @@index([userId, createdAt])
+  @@map("favorites")
+}
+
+model Notification {
+  id     String           @id @default(cuid())
+  userId String
+  type   NotificationType
+  title  String           @db.VarChar(160)
+  body   String           @db.VarChar(400)
+  /// Deep-link targets: bookingId, venueId, conversationId, amountAmd.
+  data   Json             @default("{}")
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+model Conversation {
+  id            String  @id @default(cuid())
+  venueId       String
+  hostProfileId String
+  guestId       String
+  bookingId     String? @unique
+
+  lastMessageAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+
+  venue    Venue       @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  host     HostProfile @relation("ConversationHost", fields: [hostProfileId], references: [id], onDelete: Cascade)
+  guest    User        @relation("ConversationGuest", fields: [guestId], references: [id], onDelete: Cascade)
+  booking  Booking?    @relation(fields: [bookingId], references: [id])
+  messages Message[]
+
+  @@unique([venueId, guestId])
+  @@index([guestId, lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String    @db.VarChar(4000)
+  readAt         DateTime?
+  idempotencyKey String?   @unique @db.VarChar(64)
+
+  createdAt DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
+}
+
+/// Generic idempotency ledger for non-payment mutations (booking creation, in
+/// particular): the same key returns the recorded response instead of acting
+/// twice when a phone retries on a flaky connection.
+model IdempotencyRecord {
+  key       String   @id @db.VarChar(64)
+  userId    String
+  scope     String   @db.VarChar(64)
+  resultId  String   @db.VarChar(64)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("idempotency_records")
+}
