@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "description": "Zal — book the hall, skip the phone calls. Cross-platform venue booking for the Armenian market.",
   "packageManager": "pnpm@9.12.3",
-  "engines": { "node": ">=20.11" },
+  "engines": {
+    "node": ">=20.11"
+  },
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
