@@ -19,6 +19,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppError } from '../../common/errors/app-error';
 import { OtpService } from '../auth/otp.service';
 import { TokenService } from '../auth/token.service';
+import { StorageService } from '../uploads/storage.service';
 import { toUserDto } from './user.mapper';
 
 const BCRYPT_ROUNDS = 12;
@@ -29,6 +30,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     private readonly otp: OtpService,
     private readonly tokens: TokenService,
+    private readonly storage: StorageService,
   ) {}
 
   async me(userId: string): Promise<Me> {
@@ -58,6 +60,19 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, body: UpdateProfileBody): Promise<Me> {
+    /**
+     * An avatar has to be one of ours. The field is a URL because that is what
+     * every client renders, but accepting any URL would let a profile point at
+     * an attacker's server and quietly report the IP of everyone who loads a
+     * page the avatar appears on — a venue listing, a review, a message thread.
+     */
+    if (body.avatarUrl && !this.storage.isOwnMediaUrl(body.avatarUrl)) {
+      throw new AppError(
+        ErrorCode.VALIDATION_FAILED,
+        'Upload the picture first and use the URL that came back',
+      );
+    }
+
     if (body.email) {
       const taken = await this.prisma.user.findFirst({
         where: { email: body.email, id: { not: userId }, deletedAt: null },

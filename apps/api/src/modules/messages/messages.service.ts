@@ -122,6 +122,21 @@ export class MessagesService {
     });
     if (!venue) throw AppError.notFound('Venue');
 
+    /**
+     * A conversation can be attached to a booking, and the id for that comes
+     * from the client — so it is checked rather than stored. Without this, any
+     * guest could hang their conversation off any booking reference they cared
+     * to guess, and the thread would show the host a booking that has nothing
+     * to do with either of them.
+     */
+    if (body.bookingId) {
+      const booking = await this.prisma.booking.findFirst({
+        where: { id: body.bookingId, userId, venueId: venue.id },
+        select: { id: true },
+      });
+      if (!booking) throw AppError.notFound('Booking');
+    }
+
     const conversation = await this.prisma.conversation.upsert({
       where: { venueId_guestId: { venueId: venue.id, guestId: userId } },
       create: {
@@ -144,8 +159,17 @@ export class MessagesService {
     const conversation = await this.assertParticipant(userId, conversationId);
 
     if (body.idempotencyKey) {
-      const existing = await this.prisma.message.findUnique({
-        where: { idempotencyKey: body.idempotencyKey },
+      /**
+       * Scoped to this sender and this conversation, not to the key alone.
+       *
+       * Idempotency keys are chosen by clients, so an unscoped lookup is a read
+       * of somebody else's message: send with a key that happens to collide —
+       * or is guessed — and the reply is their text, their sender id and the
+       * conversation they said it in. The key identifies a retry of *this*
+       * request; it is not a handle on the messages table.
+       */
+      const existing = await this.prisma.message.findFirst({
+        where: { idempotencyKey: body.idempotencyKey, senderId: userId, conversationId },
       });
       if (existing) return toMessageDto(existing);
     }

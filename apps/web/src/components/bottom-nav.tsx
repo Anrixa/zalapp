@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useUnreadCount } from '@zal/api-client';
+import { useT } from '@/lib/i18n';
 import { BellIcon, HeartIcon, HallIcon, SearchIcon, UserIcon } from './icons';
 
 const TABS = [
@@ -22,11 +23,12 @@ const TABS = [
  * second of a host confirming a booking.
  */
 export function BottomNav() {
+  const t = useT();
   const pathname = usePathname();
   const { data: unread } = useUnreadCount();
 
   return (
-    <nav className="bottom-nav" aria-label="Main">
+    <nav className="bottom-nav" aria-label={t('Main')}>
       {TABS.map(({ href, label, Icon }) => {
         const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
         const badge = href === '/notifications' ? (unread?.unread ?? 0) : 0;
@@ -60,8 +62,10 @@ export function BottomNav() {
                 </span>
               )}
             </span>
-            {label}
-            {badge > 0 && <span className="sr-only">, {badge} unread</span>}
+            {t(label)}
+            {badge > 0 && (
+              <span className="sr-only">, {t('{count} unread', { count: badge })}</span>
+            )}
           </Link>
         );
       })}

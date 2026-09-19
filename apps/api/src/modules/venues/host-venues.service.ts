@@ -402,6 +402,15 @@ export class HostVenuesService {
   async addPhoto(userId: string, venueId: string, body: AddVenuePhotoBody): Promise<HostVenue> {
     await this.ownedVenue(userId, venueId);
 
+    // The key has to be one this host was issued. Otherwise a venue photo can
+    // be pointed at any object in the bucket, including somebody else's.
+    if (!this.storage.ownsKey(userId, body.key)) {
+      throw new AppError(
+        ErrorCode.VALIDATION_FAILED,
+        'Upload the photo first and send the key that came back',
+      );
+    }
+
     const count = await this.prisma.venueImage.count({ where: { venueId } });
     if (count >= 40) {
       throw new AppError(ErrorCode.CONFLICT, 'A venue can have up to 40 photos');

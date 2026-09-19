@@ -87,7 +87,7 @@ export default function SettingsPage() {
         </div>
         {me.currency !== Currency.AMD && (
           <p style={{ fontSize: 12, color: 'var(--zal-ink-muted)', margin: '10px 24px 0' }}>
-            Prices are charged in AMD. Other currencies are shown as an approximate guide.
+            {t('Prices are charged in AMD. Other currencies are shown as an approximate guide.')}
           </p>
         )}
       </section>

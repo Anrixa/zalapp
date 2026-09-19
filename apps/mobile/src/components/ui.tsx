@@ -15,6 +15,7 @@ import { ZalApiError } from '@zal/api-client';
 import { bookingStatusTone } from '@zal/tokens';
 import type { BookingStatus } from '@zal/contracts';
 import { colors, fonts, radii, shadow, spacing, theme, MIN_TOUCH_TARGET } from '../theme';
+import { useT } from '../i18n';
 
 /**
  * The shared controls.
@@ -101,13 +102,14 @@ export function ScreenHeader({
   onBack?: () => void;
   right?: ReactNode;
 }) {
+  const t = useT();
   const router = useRouter();
 
   return (
     <View style={[theme.row, { gap: 14, paddingHorizontal: spacing.gutter, paddingTop: 8 }]}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Go back"
+        accessibilityLabel={t('Go back')}
         onPress={onBack ?? (() => router.back())}
         style={theme.iconButton}
         hitSlop={8}

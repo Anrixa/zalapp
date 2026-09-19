@@ -27,7 +27,7 @@ export default function VenueDetailScreen() {
   const { data: reviewPages } = useVenueReviews(venue?.id, { limit: 3 });
   const toggleFavorite = useToggleFavorite();
 
-  if (isLoading) return <Loading label="Loading venue" />;
+  if (isLoading) return <Loading label={t('Loading venue')} />;
 
   if (!venue) {
     return (

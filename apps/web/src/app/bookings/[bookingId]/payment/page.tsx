@@ -60,7 +60,7 @@ export default function PaymentPage({ params }: { params: { bookingId: string } 
       <main className="page">
         <ScreenHeader title={t('Payment')} backHref="/bookings" />
         <p className="form-error" style={{ margin: 24 }}>
-          We could not find that booking.
+          {t('We could not find that booking.')}
         </p>
       </main>
     );
@@ -239,10 +239,10 @@ export default function PaymentPage({ params }: { params: { bookingId: string } 
             <h2 className="section-title" style={{ fontSize: 16, marginBottom: 10 }}>
               {t('Bank transfer')}
             </h2>
-            <Row label="Beneficiary" value={intent.bankTransfer.beneficiary} />
-            <Row label="IBAN" value={intent.bankTransfer.iban} />
-            <Row label="Bank" value={intent.bankTransfer.bank} />
-            <Row label="Reference" value={intent.bankTransfer.reference} />
+            <Row label={t('Beneficiary')} value={intent.bankTransfer.beneficiary} />
+            <Row label={t('IBAN')} value={intent.bankTransfer.iban} />
+            <Row label={t('Bank')} value={intent.bankTransfer.bank} />
+            <Row label={t('Reference')} value={intent.bankTransfer.reference} />
             <p style={{ fontSize: 12.5, color: 'var(--zal-ink-soft)', marginTop: 12 }}>
               {intent.bankTransfer.note}
             </p>

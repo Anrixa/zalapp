@@ -230,9 +230,9 @@ export default function PaymentScreen() {
           <View style={[theme.section, { paddingTop: 20 }]}>
             <View style={theme.card}>
               <Text style={theme.h2}>{t('Bank transfer')}</Text>
-              <Row label="Beneficiary" value={intent.bankTransfer.beneficiary} />
-              <Row label="IBAN" value={intent.bankTransfer.iban} />
-              <Row label="Reference" value={intent.bankTransfer.reference} />
+              <Row label={t('Beneficiary')} value={intent.bankTransfer.beneficiary} />
+              <Row label={t('IBAN')} value={intent.bankTransfer.iban} />
+              <Row label={t('Reference')} value={intent.bankTransfer.reference} />
               <Text style={[theme.muted, { marginTop: 12, lineHeight: 18 }]}>
                 {intent.bankTransfer.note}
               </Text>

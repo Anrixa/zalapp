@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { Logger, VersioningType } from '@nestjs/common';
+import { Logger, VersioningType, type INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
@@ -8,7 +8,7 @@ import type { Request, Response } from 'express';
 import { json } from 'express';
 import { AppModule } from './app.module';
 import { PrismaService } from './common/prisma/prisma.service';
-import { loadEnv } from './config/env';
+import { apiDocsEnabled, loadEnv } from './config/env';
 
 async function bootstrap(): Promise<void> {
   const env = loadEnv();
@@ -49,6 +49,29 @@ async function bootstrap(): Promise<void> {
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
   app.enableShutdownHooks();
 
+  if (apiDocsEnabled(env)) mountApiDocs(app, env.API_GLOBAL_PREFIX);
+
+  app.get(PrismaService).enableShutdownHooks(app);
+
+  await app.listen(env.API_PORT, '0.0.0.0');
+
+  logger.log(`Zal API listening on ${env.API_PUBLIC_URL}/${env.API_GLOBAL_PREFIX}/v1`);
+  if (apiDocsEnabled(env)) {
+    logger.log(`OpenAPI at ${env.API_PUBLIC_URL}/${env.API_GLOBAL_PREFIX}/docs`);
+  }
+  if (env.SMS_PROVIDER === 'console') {
+    logger.warn('SMS_PROVIDER=console — verification codes are printed to this log, not sent');
+  }
+}
+
+/**
+ * The OpenAPI explorer.
+ *
+ * Kept off in production by default: it publishes every route, body shape and
+ * error code, and the only two clients that need that information already have
+ * it as a typed package.
+ */
+function mountApiDocs(app: INestApplication, prefix: string): void {
   const swagger = new DocumentBuilder()
     .setTitle('Zal API')
     .setDescription(
@@ -63,22 +86,9 @@ async function bootstrap(): Promise<void> {
     .addTag('host')
     .build();
 
-  SwaggerModule.setup(
-    `${env.API_GLOBAL_PREFIX}/docs`,
-    app,
-    SwaggerModule.createDocument(app, swagger),
-    { swaggerOptions: { persistAuthorization: true } },
-  );
-
-  app.get(PrismaService).enableShutdownHooks(app);
-
-  await app.listen(env.API_PORT, '0.0.0.0');
-
-  logger.log(`Zal API listening on ${env.API_PUBLIC_URL}/${env.API_GLOBAL_PREFIX}/v1`);
-  logger.log(`OpenAPI at ${env.API_PUBLIC_URL}/${env.API_GLOBAL_PREFIX}/docs`);
-  if (env.SMS_PROVIDER === 'console') {
-    logger.warn('SMS_PROVIDER=console — verification codes are printed to this log, not sent');
-  }
+  SwaggerModule.setup(`${prefix}/docs`, app, SwaggerModule.createDocument(app, swagger), {
+    swaggerOptions: { persistAuthorization: true },
+  });
 }
 
 void bootstrap();

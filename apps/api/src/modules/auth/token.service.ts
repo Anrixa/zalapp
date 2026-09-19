@@ -40,6 +40,15 @@ export class TokenService {
     user: { id: string; role: string },
     context: IssueContext = {},
   ): Promise<TokenPair & { familyId: string }> {
+    const { tokens } = await this.issueWithRow(user, context);
+    return tokens;
+  }
+
+  /** As `issue`, but also hands back the stored row so a caller can link to it. */
+  private async issueWithRow(
+    user: { id: string; role: string },
+    context: IssueContext = {},
+  ): Promise<{ tokens: TokenPair & { familyId: string }; rowId: string }> {
     const familyId = context.familyId ?? randomUUID();
 
     const accessToken = await this.jwt.signAsync(
@@ -50,7 +59,7 @@ export class TokenService {
     const refreshToken = randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + this.env.JWT_REFRESH_TTL * 1000);
 
-    await this.prisma.refreshToken.create({
+    const row = await this.prisma.refreshToken.create({
       data: {
         userId: user.id,
         tokenHash: hashToken(refreshToken),
@@ -59,14 +68,18 @@ export class TokenService {
         userAgent: context.userAgent?.slice(0, 300),
         ip: context.ip?.slice(0, 64),
       },
+      select: { id: true },
     });
 
     return {
-      accessToken,
-      refreshToken,
-      expiresIn: this.env.JWT_ACCESS_TTL,
-      tokenType: 'Bearer',
-      familyId,
+      tokens: {
+        accessToken,
+        refreshToken,
+        expiresIn: this.env.JWT_ACCESS_TTL,
+        tokenType: 'Bearer',
+        familyId,
+      },
+      rowId: row.id,
     };
   }
 
@@ -76,6 +89,23 @@ export class TokenService {
     context: IssueContext = {},
   ): Promise<TokenPair & { userId: string; role: string; familyId: string }> {
     const tokenHash = hashToken(presentedToken);
+
+    /**
+     * Spending the token is the first thing that happens, and it is a single
+     * conditional write rather than a read followed by a write.
+     *
+     * Reading `usedAt` and then setting it leaves a window in which two
+     * requests both see an unspent token and both get a successor — which is
+     * exactly the situation reuse detection exists to catch, quietly passing
+     * through it. `updateMany` with `usedAt: null` in the `where` makes the
+     * database arbitrate: whoever gets `count: 1` holds the token, and everyone
+     * else is a replay by definition.
+     */
+    const claimed = await this.prisma.refreshToken.updateMany({
+      where: { tokenHash, usedAt: null, revokedAt: null },
+      data: { usedAt: new Date() },
+    });
+
     const existing = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
       include: { user: true },
@@ -85,8 +115,9 @@ export class TokenService {
       throw new AppError(ErrorCode.REFRESH_TOKEN_INVALID, 'Sign in again to continue');
     }
 
-    if (existing.usedAt) {
-      // Replay. Whoever holds this chain should not keep it.
+    if (claimed.count === 0) {
+      // Somebody else spent this token — a leak, or a client refreshing twice.
+      // Either way the chain is no longer trustworthy.
       await this.revokeFamily(existing.familyId);
       this.logger.warn(`Refresh token reuse detected for user ${existing.userId}; family revoked`);
       throw new AppError(
@@ -103,23 +134,18 @@ export class TokenService {
       throw new AppError(ErrorCode.REFRESH_TOKEN_INVALID, 'This account is no longer active');
     }
 
-    const issued = await this.issue(
+    const { tokens, rowId } = await this.issueWithRow(
       { id: existing.userId, role: existing.user.role },
       { ...context, familyId: existing.familyId },
     );
 
-    const successor = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(issued.refreshToken!) },
-      select: { id: true },
-    });
-
     await this.prisma.refreshToken.update({
       where: { id: existing.id },
-      data: { usedAt: new Date(), replacedById: successor?.id ?? null },
+      data: { replacedById: rowId },
     });
 
     return {
-      ...issued,
+      ...tokens,
       userId: existing.userId,
       role: existing.user.role,
     };

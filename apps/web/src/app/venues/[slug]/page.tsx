@@ -32,7 +32,7 @@ export default function VenueDetailPage({ params }: { params: { slug: string } }
   const { data: reviewPages } = useVenueReviews(venue?.id, { limit: 3 });
   const toggleFavorite = useToggleFavorite();
 
-  if (isLoading) return <Spinner label="Loading venue" />;
+  if (isLoading) return <Spinner label={t('Loading venue')} />;
 
   if (error || !venue) {
     return (
@@ -72,7 +72,7 @@ export default function VenueDetailPage({ params }: { params: { slug: string } }
               type="button"
               className="icon-btn"
               style={scrimStyle}
-              aria-label="Share this venue"
+              aria-label={t('Share this venue')}
               onClick={() => {
                 if (typeof navigator !== 'undefined' && navigator.share) {
                   void navigator.share({ title: venue.name, url: window.location.href });

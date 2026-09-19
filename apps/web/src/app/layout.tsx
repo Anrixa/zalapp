@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies, headers } from 'next/headers';
 import { GOOGLE_FONTS_HREF, cssVariables, fonts } from '@zal/tokens';
+import { Locale } from '@zal/contracts';
+import { createTranslator, resolveLocale } from '@zal/i18n';
 import { Providers } from './providers';
 import './globals.css';
 
@@ -31,9 +34,28 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+/**
+ * The locale this request should render in.
+ *
+ * Read on the server from the cookie `LocaleProvider` writes, so the `lang`
+ * attribute is right in the first byte of HTML rather than corrected on hydration.
+ * That attribute is what tells a screen reader which voice to use and a browser
+ * which hyphenation rules apply — hard-coding `hy` would have every Russian and
+ * English page announced in Armenian.
+ */
+function requestLocale(): Locale {
+  const stored = cookies().get('zal_locale')?.value;
+  return stored && stored in Locale
+    ? (stored as Locale)
+    : resolveLocale(headers().get('accept-language'));
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = requestLocale();
+  const t = createTranslator(locale);
+
   return (
-    <html lang="hy">
+    <html lang={locale}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -51,9 +73,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <a href="#main" className="sr-only">
-          Skip to content
+          {t('Skip to content')}
         </a>
-        <Providers>
+        <Providers initialLocale={locale}>
           <div id="main">{children}</div>
         </Providers>
       </body>

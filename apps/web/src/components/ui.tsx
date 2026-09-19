@@ -6,6 +6,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { ZalApiError } from '@zal/api-client';
 import { bookingStatusTone } from '@zal/tokens';
 import type { BookingStatus } from '@zal/contracts';
+import { useT } from '@/lib/i18n';
 import { ChevronLeft } from './icons';
 
 export function Button({
@@ -43,12 +44,13 @@ export function ScreenHeader({
   backHref?: string;
   action?: ReactNode;
 }) {
+  const t = useT();
   const router = useRouter();
 
   return (
     <header className="row" style={{ gap: 14, padding: '20px 24px 0', alignItems: 'flex-start' }}>
       {backHref ? (
-        <Link href={backHref} className="icon-btn" aria-label="Go back">
+        <Link href={backHref} className="icon-btn" aria-label={t('Go back')}>
           <ChevronLeft size={18} />
         </Link>
       ) : (
@@ -56,7 +58,7 @@ export function ScreenHeader({
           type="button"
           className="icon-btn"
           onClick={() => router.back()}
-          aria-label="Go back"
+          aria-label={t('Go back')}
         >
           <ChevronLeft size={18} />
         </button>

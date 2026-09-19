@@ -25,7 +25,7 @@ export default function BookingDetailPage({ params }: { params: { bookingId: str
       <main className="page">
         <ScreenHeader title="Booking" backHref="/bookings" />
         <p className="form-error" style={{ margin: 24 }}>
-          We could not find that booking.
+          {t('We could not find that booking.')}
         </p>
       </main>
     );

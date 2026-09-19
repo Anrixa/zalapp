@@ -6,6 +6,7 @@ import type { VenueSummary } from '@zal/contracts';
 import { BottomNav } from '@/components/bottom-nav';
 import { VenueCard, VenueCardSkeleton } from '@/components/venue-card';
 import { BellIcon, HallIcon, SearchIcon } from '@/components/icons';
+import { useT } from '@/lib/i18n';
 
 const CATEGORIES = [
   {
@@ -31,6 +32,7 @@ const CATEGORIES = [
 ] as const;
 
 export default function HomePage() {
+  const t = useT();
   const { data: me } = useMe();
   const { data, isLoading } = useDiscover();
 
@@ -38,9 +40,11 @@ export default function HomePage() {
     <main className="page">
       <header className="spread" style={{ padding: '22px 24px 0' }}>
         <div>
-          <div style={{ fontSize: 13, color: 'var(--zal-ink-soft)', fontWeight: 600 }}>Barev,</div>
+          <div style={{ fontSize: 13, color: 'var(--zal-ink-soft)', fontWeight: 600 }}>
+            {t('Barev,')}
+          </div>
           <div className="display" style={{ fontSize: 22 }}>
-            {me?.fullName ?? 'welcome to Zal'}
+            {me?.fullName ?? t('welcome to Zal')}
           </div>
         </div>
         <Link
@@ -49,8 +53,8 @@ export default function HomePage() {
           style={{ background: 'var(--zal-white)', border: '1px solid var(--zal-card-line)' }}
           aria-label={
             me?.unreadNotifications
-              ? `Notifications, ${me.unreadNotifications} unread`
-              : 'Notifications'
+              ? `${t('Notifications')}, ${t('{count} unread', { count: me.unreadNotifications })}`
+              : t('Notifications')
           }
         >
           <BellIcon size={20} />
@@ -87,7 +91,7 @@ export default function HomePage() {
           }}
         >
           <SearchIcon size={18} />
-          <span style={{ fontSize: 14.5 }}>Search halls, restaurants, cities…</span>
+          <span style={{ fontSize: 14.5 }}>{t('Search halls, restaurants, cities…')}</span>
         </Link>
       </div>
 
@@ -114,7 +118,7 @@ export default function HomePage() {
               <HallIcon size={24} />
             </span>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--zal-ink-soft)' }}>
-              {category.label}
+              {t(category.label)}
             </span>
           </Link>
         ))}
@@ -155,9 +159,9 @@ export default function HomePage() {
         </Link>
       )}
 
-      <Shelf title="Featured this week" venues={data?.featured} loading={isLoading} />
-      <Shelf title="Open this weekend" venues={data?.openThisWeekend} loading={isLoading} />
-      <Shelf title="New on Zal" venues={data?.nearby} loading={isLoading} />
+      <Shelf title={t('Featured this week')} venues={data?.featured} loading={isLoading} />
+      <Shelf title={t('Open this weekend')} venues={data?.openThisWeekend} loading={isLoading} />
+      <Shelf title={t('New on Zal')} venues={data?.nearby} loading={isLoading} />
 
       <BottomNav />
     </main>
@@ -173,6 +177,7 @@ function Shelf({
   venues: VenueSummary[] | undefined;
   loading: boolean;
 }) {
+  const t = useT();
   // An empty shelf is hidden rather than shown as a blank strip: a heading with
   // nothing under it reads like a bug.
   if (!loading && (!venues || venues.length === 0)) return null;
@@ -182,7 +187,7 @@ function Shelf({
       <div className="spread section" style={{ alignItems: 'baseline' }}>
         <h2 className="section-title">{title}</h2>
         <Link href="/search" className="btn btn--ghost" style={{ fontSize: 13 }}>
-          See all
+          {t('See all')}
         </Link>
       </div>
 

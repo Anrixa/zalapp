@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { ZalProvider, useRealtime } from '@zal/api-client';
+import type { Locale } from '@zal/contracts';
 import { API_URL, WS_URL } from '@/lib/config';
 import { LocaleProvider } from '@/lib/i18n';
 
@@ -14,7 +15,15 @@ import { LocaleProvider } from '@/lib/i18n';
  * cookie rather than the response body — the browser cannot keep a secret from
  * its own scripts, so it is not given one.
  */
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  initialLocale,
+}: {
+  children: ReactNode;
+  // Resolved on the server from the cookie, so the first paint is already in
+  // the right language instead of flashing Armenian at an English reader.
+  initialLocale?: Locale;
+}) {
   const router = useRouter();
 
   const onUnauthenticated = useCallback(() => {
@@ -35,7 +44,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ZalProvider {...options}>
-      <LocaleProvider>
+      <LocaleProvider initialLocale={initialLocale}>
         <RealtimeBridge />
         {children}
       </LocaleProvider>

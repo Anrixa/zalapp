@@ -68,7 +68,7 @@ export default function BookingDatePage({ params }: { params: { venueId: string 
               style={{ width: 36, height: 36 }}
               onClick={() => setMonthOffset((offset) => Math.max(0, offset - 1))}
               disabled={monthOffset === 0}
-              aria-label="Previous month"
+              aria-label={t('Previous month')}
             >
               <ChevronLeft size={14} />
             </button>
@@ -77,7 +77,7 @@ export default function BookingDatePage({ params }: { params: { venueId: string 
               className="icon-btn"
               style={{ width: 36, height: 36 }}
               onClick={() => setMonthOffset((offset) => Math.min(11, offset + 1))}
-              aria-label="Next month"
+              aria-label={t('Next month')}
             >
               <ChevronRight size={14} />
             </button>
@@ -174,7 +174,7 @@ export default function BookingDatePage({ params }: { params: { venueId: string 
               className="icon-btn"
               style={{ width: 36, height: 36 }}
               onClick={() => setGuests((count) => Math.max(1, count - 10))}
-              aria-label="Fewer guests"
+              aria-label={t('Fewer guests')}
             >
               −
             </button>
@@ -210,7 +210,7 @@ export default function BookingDatePage({ params }: { params: { venueId: string 
                 color: 'var(--zal-ivory)',
               }}
               onClick={() => setGuests((count) => Math.min(capacity, count + 10))}
-              aria-label="More guests"
+              aria-label={t('More guests')}
             >
               +
             </button>
@@ -286,6 +286,7 @@ function Calendar({
   loading: boolean;
   onSelect: (date: string) => void;
 }) {
+  const t = useT();
   const start = new Date(`${firstDay}T00:00:00Z`);
   const end = new Date(`${lastDay}T00:00:00Z`);
   const leadingBlanks = start.getUTCDay();
@@ -299,7 +300,7 @@ function Calendar({
   return (
     <div
       role="grid"
-      aria-label="Available dates"
+      aria-label={t('Available dates')}
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(7, 1fr)',

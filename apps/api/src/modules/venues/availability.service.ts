@@ -19,6 +19,19 @@ import {
 
 const ALL_SLOTS: TimeSlot[] = [TimeSlotEnum.AFTERNOON, TimeSlotEnum.EVENING];
 
+const slotTaken = (): AppError =>
+  new AppError(ErrorCode.SLOT_UNAVAILABLE, 'That date has just been taken — pick another one');
+
+/** Prisma's code for a unique constraint violation. */
+export function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'P2002'
+  );
+}
+
 /**
  * Availability.
  *
@@ -116,10 +129,23 @@ export class AvailabilityService {
   /**
    * Take a slot, inside the caller's transaction.
    *
-   * The unique index on (venueId, date, slot) is what actually prevents a
-   * double booking: two concurrent requests both see an open slot, both try to
-   * write the row, and exactly one succeeds. The check above is a courtesy for
-   * the UI; this is the guarantee.
+   * Two guests can be in here at the same moment for the same Saturday, and
+   * exactly one of them must come out with it. Which mechanism enforces that
+   * depends on whether a row for the date already exists, and both cases have
+   * to be covered — a date acquires a row the first time anyone prices it,
+   * blocks it or books and releases it, so "no row yet" is the exception in a
+   * venue that has been trading for a while, not the rule.
+   *
+   * No row: the unique index on (venueId, date, slot) decides. Both inserts are
+   * attempted, one raises P2002, and that guest is told the date has gone.
+   *
+   * A row already there: the `status: OPEN` in the `where` decides. Postgres
+   * makes the second `UPDATE` wait for the first to commit and then re-checks
+   * the predicate against the committed row, which by then says HELD — so it
+   * matches nothing and reports zero rows changed. Reading the row first and
+   * updating it by id would not do this: both transactions would see OPEN,
+   * both would write, and the second would simply overwrite the first guest's
+   * claim with its own. That is the double booking this method exists to stop.
    */
   async hold(
     tx: Prisma.TransactionClient,
@@ -127,24 +153,25 @@ export class AvailabilityService {
   ): Promise<void> {
     const { venueId, date, slot, bookingId } = params;
 
-    const existing = await tx.venueAvailability.findUnique({
-      where: { venueId_date_slot: { venueId, date: fromIsoDate(date), slot } },
+    const { count } = await tx.venueAvailability.updateMany({
+      where: {
+        venueId,
+        date: fromIsoDate(date),
+        slot,
+        status: AvailabilityStatus.OPEN,
+      },
+      data: { status: AvailabilityStatus.HELD, bookingId },
     });
 
-    if (existing && existing.status !== AvailabilityStatus.OPEN) {
-      throw new AppError(
-        ErrorCode.SLOT_UNAVAILABLE,
-        'That date has just been taken — pick another one',
-      );
-    }
+    if (count > 0) return;
 
-    if (existing) {
-      await tx.venueAvailability.update({
-        where: { id: existing.id },
-        data: { status: AvailabilityStatus.HELD, bookingId },
-      });
-      return;
-    }
+    // Nothing matched: either there is no row for this date, or there is one
+    // and somebody else holds it. Only the first of those is recoverable.
+    const existing = await tx.venueAvailability.findUnique({
+      where: { venueId_date_slot: { venueId, date: fromIsoDate(date), slot } },
+      select: { id: true },
+    });
+    if (existing) throw slotTaken();
 
     try {
       await tx.venueAvailability.create({
@@ -156,13 +183,13 @@ export class AvailabilityService {
           bookingId,
         },
       });
-    } catch {
-      // Unique violation: somebody else won the race in the moment between the
-      // read above and this write.
-      throw new AppError(
-        ErrorCode.SLOT_UNAVAILABLE,
-        'That date has just been taken — pick another one',
-      );
+    } catch (error) {
+      // A unique violation means somebody else inserted the row in the moment
+      // between the check above and this write. Anything else — a dropped
+      // connection, a constraint we did not anticipate — is not "the date is
+      // taken", and telling the guest it is would hide a real fault.
+      if (isUniqueViolation(error)) throw slotTaken();
+      throw error;
     }
   }
 

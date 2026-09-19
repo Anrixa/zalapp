@@ -52,6 +52,15 @@ const BUCKET_STATUSES = {
   ],
 } as const;
 
+/** A unique violation naming `ref` — two bookings landing on the same number. */
+function isRefCollision(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const candidate = error as { code?: unknown; meta?: { target?: unknown } };
+  if (candidate.code !== 'P2002') return false;
+  const target = candidate.meta?.target;
+  return Array.isArray(target) ? target.includes('ref') : target === 'ref';
+}
+
 @Injectable()
 export class BookingsService {
   private readonly logger = new Logger(BookingsService.name);
@@ -73,9 +82,9 @@ export class BookingsService {
    * the promo, the quote. The body says what the guest chose, never what it
    * costs, so a tampered request changes nothing but its own rejection.
    *
-   * The whole thing runs in one transaction, and the unique index on
-   * (venueId, date, slot) is what makes two simultaneous bookings of the same
-   * Saturday evening impossible rather than merely unlikely.
+   * The whole thing runs in one transaction, and `AvailabilityService.hold` is
+   * what makes two simultaneous bookings of the same Saturday evening
+   * impossible rather than merely unlikely.
    */
   async create(userId: string, body: CreateBookingBody): Promise<BookingDetail> {
     if (body.idempotencyKey) {
@@ -139,73 +148,104 @@ export class BookingsService {
 
     const deadlines = computeDeadlines(body.date);
 
-    const booking = await this.prisma.$transaction(async (tx) => {
-      // Sequence within the day, so refs read ZAL-20260926-01, -02, …
-      const sameDay = await tx.booking.count({ where: { eventDate: fromIsoDate(body.date) } });
+    const booking = await this.withRefRetry(async (attempt) =>
+      this.prisma.$transaction(async (tx) => {
+        // Sequence within the day, so refs read ZAL-20260926-01, -02, …
+        //
+        // `count` does not lock, so two guests booking different venues on the
+        // same date at the same moment both compute the same next number and the
+        // second hits the unique index on `ref`. That is a naming collision, not
+        // a conflict over anything real, so it is retried rather than surfaced —
+        // see `withRefRetry`. The attempt number nudges the sequence past a
+        // number that has just been taken.
+        const sameDay = await tx.booking.count({ where: { eventDate: fromIsoDate(body.date) } });
 
-      const created = await tx.booking.create({
-        data: {
-          ref: formatBookingRef(body.date, sameDay + 1),
-          venueId: venue.id,
-          userId,
-          status: BookingStatus.AWAITING_DEPOSIT,
-          eventDate: fromIsoDate(body.date),
-          slot: body.slot,
-          guestCount: body.guestCount,
-          eventType: body.eventType,
-          note: body.note ?? null,
-          rentalAmd: quote.rentalAmd,
-          addOnsTotalAmd: quote.addOnsTotalAmd,
-          discountAmd: quote.discountAmd,
-          subtotalAmd: quote.subtotalAmd,
-          serviceFeeAmd: quote.serviceFeeAmd,
-          totalAmd: quote.totalAmd,
-          depositAmd: quote.depositAmd,
-          balanceAmd: quote.balanceAmd,
-          balanceDueOn: fromIsoDate(deadlines.balanceDueOn),
-          freeCancellationUntil: fromIsoDate(deadlines.freeCancellationUntil),
-          promoCode: promo?.code ?? null,
-          addOns: {
-            create: addOns.map((addOn) => ({
-              addOnId: addOn.id,
-              name: addOn.name,
-              priceAmd: addOn.priceAmd,
-            })),
-          },
-        },
-      });
-
-      await this.availability.hold(tx, {
-        venueId: venue.id,
-        date: body.date,
-        slot: body.slot,
-        bookingId: created.id,
-        priceAmd: quote.rentalAmd,
-      });
-
-      if (promo) {
-        await tx.promoCode.update({
-          where: { id: promo.id },
-          data: { redemptions: { increment: 1 } },
-        });
-      }
-
-      if (body.idempotencyKey) {
-        await tx.idempotencyRecord.create({
+        const created = await tx.booking.create({
           data: {
-            key: body.idempotencyKey,
+            ref: formatBookingRef(body.date, sameDay + 1 + attempt),
+            venueId: venue.id,
             userId,
-            scope: 'booking.create',
-            resultId: created.id,
+            status: BookingStatus.AWAITING_DEPOSIT,
+            eventDate: fromIsoDate(body.date),
+            slot: body.slot,
+            guestCount: body.guestCount,
+            eventType: body.eventType,
+            note: body.note ?? null,
+            rentalAmd: quote.rentalAmd,
+            addOnsTotalAmd: quote.addOnsTotalAmd,
+            discountAmd: quote.discountAmd,
+            subtotalAmd: quote.subtotalAmd,
+            serviceFeeAmd: quote.serviceFeeAmd,
+            totalAmd: quote.totalAmd,
+            depositAmd: quote.depositAmd,
+            balanceAmd: quote.balanceAmd,
+            balanceDueOn: fromIsoDate(deadlines.balanceDueOn),
+            freeCancellationUntil: fromIsoDate(deadlines.freeCancellationUntil),
+            promoCode: promo?.code ?? null,
+            addOns: {
+              create: addOns.map((addOn) => ({
+                addOnId: addOn.id,
+                name: addOn.name,
+                priceAmd: addOn.priceAmd,
+              })),
+            },
           },
         });
-      }
 
-      return created;
-    });
+        await this.availability.hold(tx, {
+          venueId: venue.id,
+          date: body.date,
+          slot: body.slot,
+          bookingId: created.id,
+          priceAmd: quote.rentalAmd,
+        });
+
+        if (promo) {
+          await tx.promoCode.update({
+            where: { id: promo.id },
+            data: { redemptions: { increment: 1 } },
+          });
+        }
+
+        if (body.idempotencyKey) {
+          await tx.idempotencyRecord.create({
+            data: {
+              key: body.idempotencyKey,
+              userId,
+              scope: 'booking.create',
+              resultId: created.id,
+            },
+          });
+        }
+
+        return created;
+      }),
+    );
 
     this.logger.log(`Booking ${booking.ref} held for user ${userId} at ${venue.name}`);
     return this.detail(userId, booking.id);
+  }
+
+  /**
+   * Retry a booking insert whose reference number collided.
+   *
+   * Only that: a slot conflict, an over-capacity guest count or anything else
+   * the caller raised deliberately is an answer, and retrying it would just
+   * produce the same answer more slowly. A unique violation on `ref` is the one
+   * failure that means "try again with a different number", and three attempts
+   * is generous for a collision that needs two bookings created in the same
+   * millisecond on the same calendar day.
+   */
+  private async withRefRetry<T>(run: (attempt: number) => Promise<T>): Promise<T> {
+    const attempts = 3;
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        return await run(attempt);
+      } catch (error) {
+        if (attempt >= attempts - 1 || !isRefCollision(error)) throw error;
+        this.logger.warn(`Booking reference collided; retrying (attempt ${attempt + 2})`);
+      }
+    }
   }
 
   async list(userId: string, query: ListBookingsQuery): Promise<Page<BookingSummary>> {

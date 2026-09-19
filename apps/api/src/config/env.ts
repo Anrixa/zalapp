@@ -63,7 +63,54 @@ const envSchema = z.object({
   BOOKING_HOLD_MINUTES: z.coerce.number().int().positive().default(60),
 
   EXPO_ACCESS_TOKEN: z.string().optional(),
+
+  /**
+   * Whether to serve the OpenAPI explorer.
+   *
+   * Off in production by default. The document lists every route, body shape
+   * and error code in the API, which is a gift to anyone probing it and of no
+   * use to the two clients that already have the contracts as a package.
+   */
+  ENABLE_API_DOCS: z
+    .string()
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value !== 'false')),
 });
+
+/**
+ * Defaults that are right for a laptop and dangerous on a server.
+ *
+ * Every one of these is a setting that works — silently and wrongly — if it is
+ * left unset in production. `PAYMENTS_PROVIDER=mock` settles every payment
+ * instantly for free, which means a deploy that forgets it gives away bookings;
+ * `SMS_PROVIDER=console` prints verification codes into the log, which means
+ * anyone with log access can sign in as anybody. Neither fails, so neither gets
+ * noticed. Refusing to boot is the only version of this that gets caught.
+ */
+function assertProductionSafe(env: Env): void {
+  if (env.NODE_ENV !== 'production') return;
+
+  const unsafe: string[] = [];
+  if (env.PAYMENTS_PROVIDER === 'mock') {
+    unsafe.push('PAYMENTS_PROVIDER=mock settles every payment instantly without charging anyone');
+  }
+  if (env.SMS_PROVIDER === 'console') {
+    unsafe.push(
+      'SMS_PROVIDER=console prints verification codes to the log instead of sending them',
+    );
+  }
+  if (!process.env.CORS_ORIGINS) {
+    unsafe.push('CORS_ORIGINS is unset, so only localhost origins are allowed');
+  }
+
+  if (unsafe.length > 0) {
+    throw new Error(
+      `Refusing to start in production with development defaults:\n${unsafe
+        .map((line) => `  • ${line}`)
+        .join('\n')}`,
+    );
+  }
+}
 
 export type Env = z.infer<typeof envSchema>;
 
@@ -80,8 +127,15 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(`Invalid environment configuration:\n${details}`);
   }
 
+  assertProductionSafe(parsed.data);
+
   cached = parsed.data;
   return cached;
+}
+
+/** Whether the OpenAPI explorer should be served: off in production unless asked for. */
+export function apiDocsEnabled(env: Env): boolean {
+  return env.ENABLE_API_DOCS ?? env.NODE_ENV !== 'production';
 }
 
 /** Test helper: forget the parsed environment so a new one can be loaded. */

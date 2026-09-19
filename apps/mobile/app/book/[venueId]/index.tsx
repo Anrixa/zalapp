@@ -57,7 +57,7 @@ export default function BookingDateScreen() {
             <View style={[theme.row, { gap: 8 }]}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Previous month"
+                accessibilityLabel={t('Previous month')}
                 disabled={monthOffset === 0}
                 onPress={() => setMonthOffset((offset) => Math.max(0, offset - 1))}
                 style={[
@@ -69,7 +69,7 @@ export default function BookingDateScreen() {
               </Pressable>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Next month"
+                accessibilityLabel={t('Next month')}
                 onPress={() => setMonthOffset((offset) => Math.min(11, offset + 1))}
                 style={[theme.iconButton, { width: 36, height: 36 }]}
               >
@@ -184,7 +184,7 @@ export default function BookingDateScreen() {
             <View style={[theme.row, { gap: 16 }]}>
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Fewer guests"
+                accessibilityLabel={t('Fewer guests')}
                 onPress={() => setGuests((count) => Math.max(10, count - 10))}
                 style={[theme.iconButton, { width: 36, height: 36 }]}
               >
@@ -206,7 +206,7 @@ export default function BookingDateScreen() {
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="More guests"
+                accessibilityLabel={t('More guests')}
                 onPress={() => setGuests((count) => Math.min(capacity, count + 10))}
                 style={[theme.iconButton, { width: 36, height: 36, backgroundColor: colors.ink }]}
               >

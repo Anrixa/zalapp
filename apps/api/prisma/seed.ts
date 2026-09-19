@@ -201,6 +201,21 @@ const ADD_ONS = [
 ];
 
 async function main(): Promise<void> {
+  /**
+   * Not in production, unless somebody says so out loud.
+   *
+   * This writes accounts whose password is in this file, and it upserts by
+   * natural key — so run against a live database it does not fail, it quietly
+   * installs a login anyone reading the repository already knows. A staging
+   * environment that genuinely wants demo data can set `ALLOW_SEED=true`.
+   */
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED !== 'true') {
+    throw new Error(
+      'Refusing to seed a production database: this creates demo accounts with a ' +
+        'published password. Set ALLOW_SEED=true if that is really what you want.',
+    );
+  }
+
   console.log('Seeding Zal…');
 
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);

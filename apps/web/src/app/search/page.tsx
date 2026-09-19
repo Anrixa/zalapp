@@ -9,6 +9,7 @@ import { BottomNav } from '@/components/bottom-nav';
 import { VenueCard, VenueCardSkeleton } from '@/components/venue-card';
 import { Button, EmptyState, ErrorNote } from '@/components/ui';
 import { ChevronLeft, SearchIcon, SlidersIcon } from '@/components/icons';
+import { useT } from '@/lib/i18n';
 
 const TYPE_LABELS: Record<string, string> = {
   BANQUET_HALL: 'Banquet hall',
@@ -42,6 +43,7 @@ export default function SearchPage() {
  * truth for "what is currently filtered".
  */
 function SearchScreen() {
+  const t = useT();
   const router = useRouter();
   const params = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -83,7 +85,7 @@ function SearchScreen() {
   return (
     <main className="page page--wide">
       <div className="row" style={{ gap: 12, padding: '20px 24px 0' }}>
-        <Link href="/" className="icon-btn" aria-label="Back to home">
+        <Link href="/" className="icon-btn" aria-label={t('Back to home')}>
           <ChevronLeft size={18} />
         </Link>
 
@@ -97,7 +99,7 @@ function SearchScreen() {
           }}
         >
           <label className="sr-only" htmlFor="venue-search">
-            Search venues
+            {t('Search venues')}
           </label>
           <div
             className="row"
@@ -114,7 +116,7 @@ function SearchScreen() {
               id="venue-search"
               name="q"
               defaultValue={query.q ?? ''}
-              placeholder="Banquet halls · Yerevan"
+              placeholder={t('Banquet halls · Yerevan')}
               className="grow"
               style={{
                 border: 'none',
@@ -135,7 +137,11 @@ function SearchScreen() {
           className="icon-btn"
           aria-expanded={filtersOpen}
           aria-controls="filters"
-          aria-label={activeFilterCount ? `Filters, ${activeFilterCount} active` : 'Filters'}
+          aria-label={
+            activeFilterCount
+              ? t('Filters, {count} active', { count: activeFilterCount })
+              : t('Filters')
+          }
           style={{
             background: 'var(--zal-pomegranate)',
             color: 'var(--zal-ivory)',
@@ -210,7 +216,7 @@ function SearchScreen() {
         </span>
 
         <label className="row" style={{ gap: 6 }}>
-          <span className="sr-only">Sort results</span>
+          <span className="sr-only">{t('Sort results')}</span>
           <select
             value={query.sort}
             onChange={(event) => update({ sort: event.target.value })}
@@ -225,7 +231,7 @@ function SearchScreen() {
           >
             {SORTS.map((sort) => (
               <option key={sort.value} value={sort.value}>
-                {sort.label}
+                {t(sort.label)}
               </option>
             ))}
           </select>
@@ -242,11 +248,11 @@ function SearchScreen() {
 
       {!isLoading && venues.length === 0 && !error && (
         <EmptyState
-          title="No halls match that yet"
+          title={t('No halls match that yet')}
           body="Try widening the guest count or the price range — or clear the filters and start again."
           action={
             <Button variant="secondary" onClick={() => router.replace('/search')}>
-              Clear filters
+              {t('Clear filters')}
             </Button>
           }
         />
@@ -260,7 +266,7 @@ function SearchScreen() {
             loading={isFetchingNextPage}
             onClick={() => void fetchNextPage()}
           >
-            Show more
+            {t('Show more')}
           </Button>
         </div>
       )}
@@ -314,13 +320,14 @@ function Filters({
   onClose: () => void;
   resultCount: number;
 }) {
+  const t = useT();
   const selectedAmenities = params.getAll('amenities');
 
   return (
-    <section id={id} className="card" style={{ margin: '16px 24px 0' }} aria-label="Filters">
+    <section id={id} className="card" style={{ margin: '16px 24px 0' }} aria-label={t('Filters')}>
       <fieldset style={{ border: 'none', padding: 0, margin: '0 0 20px' }}>
         <legend className="eyebrow" style={{ marginBottom: 10 }}>
-          Guest capacity
+          {t('Guest capacity')}
         </legend>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
           {CAPACITY_BANDS.map((band) => {
@@ -356,7 +363,7 @@ function Filters({
 
       <fieldset style={{ border: 'none', padding: 0, margin: '0 0 20px' }}>
         <legend className="eyebrow" style={{ marginBottom: 10 }}>
-          Price ceiling (AMD per event)
+          {t('Price ceiling (AMD per event)')}
         </legend>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
           {[300_000, 450_000, 650_000, 1_000_000].map((ceiling) => {
@@ -378,7 +385,7 @@ function Filters({
 
       <fieldset style={{ border: 'none', padding: 0, margin: '0 0 20px' }}>
         <legend className="eyebrow" style={{ marginBottom: 10 }}>
-          Amenities
+          {t('Amenities')}
         </legend>
         <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
           {AMENITIES.map((amenity) => {
@@ -396,7 +403,7 @@ function Filters({
                   onChange({ amenities: next.length ? next : null });
                 }}
               >
-                {amenity.label}
+                {t(amenity.label)}
               </button>
             );
           })}
@@ -404,7 +411,7 @@ function Filters({
       </fieldset>
 
       <label className="field" style={{ marginBottom: 20 }}>
-        <span>Available on</span>
+        <span>{t('Available on')}</span>
         <input
           type="date"
           className="input"
@@ -415,7 +422,7 @@ function Filters({
 
       <div className="row" style={{ gap: 12 }}>
         <Button variant="secondary" onClick={onClear}>
-          Clear all
+          {t('Clear all')}
         </Button>
         <Button block onClick={onClose}>
           Show {resultCount} {resultCount === 1 ? 'hall' : 'halls'}

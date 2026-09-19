@@ -286,6 +286,15 @@ server; display conversion happens at the edge using the rate table in
 - **The workspace uses `node-linker=hoisted`.** React Native's tooling assumes a
   flat `node_modules`, and several packages in the Expo stack import
   dependencies they never declare. `.npmrc` explains the trade-off.
+- **Signing out does not invalidate an access token already issued.** Revoking
+  a refresh token ends the session's ability to renew, but the JWT in hand stays
+  valid until it expires — up to `JWT_ACCESS_TTL`, 15 minutes by default. Closing
+  that window needs a denylist keyed on the `sid` claim, which is a Redis
+  dependency the API does not otherwise require.
+- **The API refuses to start in production with development defaults.**
+  `PAYMENTS_PROVIDER=mock`, `SMS_PROVIDER=console` and an unset `CORS_ORIGINS`
+  all work silently and wrongly, so `loadEnv` treats them as fatal under
+  `NODE_ENV=production` rather than letting a deploy discover them later.
 - **`mcp.json` has a token in this repository's history.** It was replaced with
   an environment reference, but a later commit cannot remove it from history —
   that token should be treated as compromised and revoked.
