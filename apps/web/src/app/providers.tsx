@@ -5,6 +5,7 @@ import { useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { ZalProvider, useRealtime } from '@zal/api-client';
 import { API_URL, WS_URL } from '@/lib/config';
+import { LocaleProvider } from '@/lib/i18n';
 
 /**
  * Everything client-side hangs off here.
@@ -34,8 +35,10 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ZalProvider {...options}>
-      <RealtimeBridge />
-      {children}
+      <LocaleProvider>
+        <RealtimeBridge />
+        {children}
+      </LocaleProvider>
     </ZalProvider>
   );
 }

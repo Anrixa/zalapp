@@ -17,6 +17,7 @@ import type {
   QuoteRequestBody,
   RegisterBody,
   SendMessageBody,
+  UpdateNotificationPreferencesBody,
   UpdateProfileBody,
   VenueSearchQuery,
   VenueSummary,
@@ -412,5 +413,74 @@ export function useSendMessage(conversationId: string) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.messages.thread(conversationId) });
       void queryClient.invalidateQueries({ queryKey: queryKeys.messages.conversations() });
     },
+  });
+}
+
+/* ── Account settings ───────────────────────────────────────────────────── */
+
+/**
+ * These exist so app code never imports React Query directly.
+ *
+ * That is not only tidiness. In a pnpm workspace each package resolves its own
+ * copy of a dependency, and two copies of React Query mean two contexts: a
+ * `useQuery` called from an app would look for a client that only ever existed
+ * inside this package's copy, and fail with "No QueryClient set". Keeping every
+ * hook here means there is one copy doing the work.
+ */
+export function useNotificationPreferences() {
+  const api = useZalApi();
+
+  return useQuery({
+    queryKey: queryKeys.me.notificationPreferences(),
+    queryFn: () => api.me.notificationPreferences(),
+  });
+}
+
+export function useUpdateNotificationPreferences() {
+  const api = useZalApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: UpdateNotificationPreferencesBody) =>
+      api.me.updateNotificationPreferences(body),
+    onSuccess: (preferences) => {
+      queryClient.setQueryData(queryKeys.me.notificationPreferences(), preferences);
+    },
+  });
+}
+
+export function usePaymentMethods() {
+  const api = useZalApi();
+
+  return useQuery({
+    queryKey: queryKeys.me.paymentMethods(),
+    queryFn: () => api.me.paymentMethods(),
+  });
+}
+
+export function useRemovePaymentMethod() {
+  const api = useZalApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (methodId: string) => api.me.removePaymentMethod(methodId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.me.paymentMethods() });
+    },
+  });
+}
+
+export function useBookingCalendarLinks() {
+  const api = useZalApi();
+  return useMutation({ mutationFn: (bookingId: string) => api.bookings.calendar(bookingId) });
+}
+
+export function useDeleteAccount() {
+  const api = useZalApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (reason?: string) => api.me.deleteAccount(reason),
+    onSettled: () => queryClient.clear(),
   });
 }

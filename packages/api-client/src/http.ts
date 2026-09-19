@@ -1,5 +1,18 @@
 import { ErrorCode, apiErrorSchema, routes, type ApiError } from '@zal/contracts';
-import type { ZodSchema } from 'zod';
+import type { ZodType, ZodTypeDef } from 'zod';
+
+/**
+ * A schema used to parse a response.
+ *
+ * Written as `ZodType<T, ZodTypeDef, unknown>` rather than `ZodSchema<T>`,
+ * because `ZodSchema<T>` fixes the schema's *input* type to `T` as well as its
+ * output. With any schema that uses `.default()`, those two differ — the input
+ * has optional fields the output does not — and TypeScript resolves the clash
+ * by inferring the input type. The parsed value then arrives typed with every
+ * defaulted field optional, which is precisely backwards. Naming the input as
+ * `unknown` lets inference pick the output, which is what `parse` returns.
+ */
+type ResponseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
 import { MemoryTokenStorage, type TokenStorage } from './storage';
 
 export interface ZalClientOptions {
@@ -52,7 +65,7 @@ interface RequestOptions<T> {
   body?: unknown;
   query?: Record<string, unknown>;
   /** Parse the response with this schema. Omit to return it unchecked. */
-  schema?: ZodSchema<T>;
+  schema?: ResponseSchema<T>;
   /** Skip the access token and the refresh dance — used by the auth calls. */
   anonymous?: boolean;
   signal?: AbortSignal;
@@ -156,7 +169,7 @@ export class ZalClient {
     }
   }
 
-  private async parse<T>(response: Response, schema?: ZodSchema<T>): Promise<T> {
+  private async parse<T>(response: Response, schema?: ResponseSchema<T>): Promise<T> {
     if (response.status === 204) return undefined as T;
 
     const text = await response.text();
