@@ -9,7 +9,7 @@
     "dev": "nest start --watch",
     "start": "node dist/main.js",
     "typecheck": "prisma generate && tsc --noEmit",
-    "lint": "eslint src prisma --ext .ts --max-warnings 0",
+    "lint": "eslint src prisma test --ext .ts --max-warnings 0",
     "test": "vitest run",
     "db:seed": "tsx prisma/seed.ts",
     "prisma:generate": "prisma generate",
