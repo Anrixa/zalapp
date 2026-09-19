@@ -8,12 +8,13 @@
     "build": "prisma generate && nest build",
     "dev": "nest start --watch",
     "start": "node dist/main.js",
-    "typecheck": "prisma generate && tsc --noEmit",
+    "typecheck": "(prisma generate || node scripts/generate-offline.mjs) && tsc --noEmit",
     "lint": "eslint src prisma test --ext .ts --max-warnings 0",
     "test": "vitest run",
     "db:seed": "tsx prisma/seed.ts",
     "prisma:generate": "prisma generate",
-    "clean": "rm -rf dist .turbo"
+    "clean": "rm -rf dist .turbo",
+    "prisma:generate:offline": "node scripts/generate-offline.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -47,6 +48,7 @@
     "@nestjs/cli": "^10.4.9",
     "@nestjs/schematics": "^10.2.3",
     "@nestjs/testing": "^10.4.15",
+    "@prisma/internals": "5.22.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.8",
     "@types/express": "^5.0.0",

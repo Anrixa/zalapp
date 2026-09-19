@@ -270,11 +270,15 @@ server; display conversion happens at the edge using the rate table in
 
 ## Known constraints
 
-- **Prisma needs network on first install.** `prisma generate` downloads its
-  query engine from `binaries.prisma.sh`. Any environment that blocks that host
-  cannot build `apps/api`, and the failure is a checksum or 403 error rather
-  than anything wrong with the schema. CI runs `prisma generate` before
-  typecheck for this reason.
+- **Prisma needs network before the API can *run*.** `prisma generate` downloads
+  a query engine from `binaries.prisma.sh`; where that host is blocked the
+  failure is a checksum or 403 error rather than anything wrong with the schema.
+  `pnpm --filter @zal/api typecheck` falls back to
+  `scripts/generate-offline.mjs`, which writes the client's TypeScript from the
+  schema and skips the engine, so type checking, linting and the unit tests all
+  work with no network. `build` deliberately has no such fallback: a client
+  generated that way has no engine to load and would fail at startup, so the
+  build stays honest and demands the real thing.
 - **Rate limiting needs Redis to hold across instances.** With `REDIS_URL` set
   the limits are shared; without it they are per process, which is correct for
   a single instance and wrong behind a load balancer. The API logs which mode

@@ -17,7 +17,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/* ── Enums (mirrored one-for-one in @zal/contracts) ─────────────────────── */
+// ── Enums (mirrored one-for-one in @zal/contracts) ───────────────────────
 
 enum UserRole {
   GUEST
@@ -145,7 +145,7 @@ enum VerificationPurpose {
   RESET_PASSWORD
 }
 
-/* ── Identity ───────────────────────────────────────────────────────────── */
+// ── Identity ─────────────────────────────────────────────────────────────
 
 model User {
   id           String    @id @default(cuid())
@@ -308,7 +308,7 @@ model PaymentMethod {
   @@map("payment_methods")
 }
 
-/* ── Venues ─────────────────────────────────────────────────────────────── */
+// ── Venues ───────────────────────────────────────────────────────────────
 
 model Venue {
   id            String      @id @default(cuid())
@@ -450,7 +450,7 @@ model AddOn {
   @@map("add_ons")
 }
 
-/* ── Bookings and money ─────────────────────────────────────────────────── */
+// ── Bookings and money ───────────────────────────────────────────────────
 
 model Booking {
   id         String        @id @default(cuid())
@@ -566,7 +566,7 @@ model PromoCode {
   @@map("promo_codes")
 }
 
-/* ── Social ─────────────────────────────────────────────────────────────── */
+// ── Social ───────────────────────────────────────────────────────────────
 
 /// Reviews come from completed bookings only — the one-to-one link to Booking
 /// is what makes "from real bookings" on the venue page true by construction.
