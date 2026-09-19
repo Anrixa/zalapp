@@ -357,25 +357,39 @@ export class HostVenuesService {
       });
 
       for (const [position, addOn] of body.addOns.entries()) {
+        const fields = {
+          code: addOn.code,
+          name: addOn.name,
+          description: addOn.description,
+          priceAmd: addOn.priceAmd,
+          mandatory: addOn.mandatory,
+          position,
+          deletedAt: null,
+        };
+
+        /**
+         * An `id` means "this existing extra", so it selects the row — matching
+         * on `code` instead would turn a renamed code into a second extra and
+         * leave the host with two of something they meant to have one of. No
+         * id means a new extra, and then `code` is the natural key: upserting
+         * revives one that was soft-deleted rather than colliding with it.
+         *
+         * `updateMany` keeps the venue scope in the `where`, so an id belonging
+         * to somebody else's venue matches nothing.
+         */
+        if (addOn.id) {
+          const { count } = await tx.addOn.updateMany({
+            where: { id: addOn.id, venueId },
+            data: fields,
+          });
+          if (count === 0) throw AppError.notFound('Add-on');
+          continue;
+        }
+
         await tx.addOn.upsert({
           where: { venueId_code: { venueId, code: addOn.code } },
-          create: {
-            venueId,
-            code: addOn.code,
-            name: addOn.name,
-            description: addOn.description,
-            priceAmd: addOn.priceAmd,
-            mandatory: addOn.mandatory,
-            position,
-          },
-          update: {
-            name: addOn.name,
-            description: addOn.description,
-            priceAmd: addOn.priceAmd,
-            mandatory: addOn.mandatory,
-            position,
-            deletedAt: null,
-          },
+          create: { venueId, ...fields },
+          update: fields,
         });
       }
     });
@@ -410,10 +424,30 @@ export class HostVenuesService {
   }
 
   async removePhoto(userId: string, venueId: string, photoId: string): Promise<HostVenue> {
-    await this.ownedVenue(userId, venueId);
+    const venue = await this.ownedVenue(userId, venueId);
 
     const photo = await this.prisma.venueImage.findFirst({ where: { id: photoId, venueId } });
     if (!photo) throw AppError.notFound('Photo');
+
+    /**
+     * `publishBlockers` is checked when a venue goes live, and removing its last
+     * photo is the one way to walk back through that gate afterwards: search
+     * filters on status alone, so the listing would stay in results with an
+     * empty card — precisely the state the publish rule exists to prevent.
+     *
+     * Refused rather than silently unpublished, because a host swapping a photo
+     * should not discover later that their hall vanished from search. Add the
+     * replacement first, or pause the listing.
+     */
+    if (venue.status === VenueStatus.PUBLISHED) {
+      const remaining = await this.prisma.venueImage.count({ where: { venueId } });
+      if (remaining <= 1) {
+        throw new AppError(
+          ErrorCode.CONFLICT,
+          'A published venue needs at least one photo — add another before removing this one, or pause the listing',
+        );
+      }
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.venueImage.delete({ where: { id: photoId } });
@@ -445,9 +479,15 @@ export class HostVenuesService {
     const existingIds = new Set(existing.map((image) => image.id));
 
     // A partial list would silently leave photos at stale positions, so the
-    // order has to name every one of them.
+    // order has to name every one of them — exactly once. Distinctness is
+    // checked again here rather than left to the schema, because "same length
+    // and every id belongs to this venue" is satisfied by a list that repeats
+    // one photo and omits another, and that list reorders the wrong things.
+    const distinctIds = new Set(body.ids);
     const sameSet =
-      body.ids.length === existingIds.size && body.ids.every((id) => existingIds.has(id));
+      distinctIds.size === body.ids.length &&
+      body.ids.length === existingIds.size &&
+      body.ids.every((id) => existingIds.has(id));
     if (!sameSet) {
       throw new AppError(
         ErrorCode.VALIDATION_FAILED,
@@ -489,7 +529,16 @@ export class HostVenuesService {
     }
 
     const slots = (body.slots ?? ALL_SLOTS) as TimeSlot[];
-    const status = body.priceAmd === undefined ? AvailabilityStatus.BLOCKED : undefined;
+
+    /**
+     * A price and a closure are the two things this endpoint does, and they are
+     * opposites: `priceAmd` means "sell these dates at this instead", so it
+     * opens them. Leaving the status alone when a price was given would let a
+     * host put a New Year rate on a day they had closed and quietly keep it
+     * closed, with the calendar showing a price nobody can pay.
+     */
+    const status =
+      body.priceAmd === undefined ? AvailabilityStatus.BLOCKED : AvailabilityStatus.OPEN;
 
     const taken = await this.prisma.venueAvailability.findMany({
       where: {
@@ -504,8 +553,15 @@ export class HostVenuesService {
       taken.map((row) => `${row.date.toISOString().slice(0, 10)}:${row.slot}`),
     );
 
-    let updated = 0;
     const skipped: string[] = [];
+    const rows: {
+      venueId: string;
+      date: Date;
+      slot: TimeSlot;
+      status: AvailabilityStatus;
+      priceAmd: number | null;
+      note: string | null;
+    }[] = [];
 
     for (const date of dates) {
       for (const slot of slots) {
@@ -513,31 +569,61 @@ export class HostVenuesService {
           skipped.push(`${date} ${slot.toLowerCase()}`);
           continue;
         }
-
-        await this.prisma.venueAvailability.upsert({
-          where: { venueId_date_slot: { venueId, date: fromIsoDate(date), slot } },
-          create: {
-            venueId,
-            date: fromIsoDate(date),
-            slot,
-            status: status ?? AvailabilityStatus.OPEN,
-            priceAmd: body.priceAmd ?? null,
-            note: body.note ?? null,
-          },
-          update: {
-            ...(status ? { status } : {}),
-            ...(body.priceAmd !== undefined ? { priceAmd: body.priceAmd } : {}),
-            ...(body.note !== undefined ? { note: body.note } : {}),
-          },
+        rows.push({
+          venueId,
+          date: fromIsoDate(date),
+          slot,
+          status,
+          priceAmd: body.priceAmd ?? null,
+          note: body.note ?? null,
         });
-        updated += 1;
       }
     }
 
-    return { updated, skipped };
+    if (rows.length === 0) return { updated: 0, skipped };
+
+    /**
+     * Two statements instead of a row-at-a-time loop. "Close all of August" is
+     * 124 upserts, and a connection that drops halfway through leaves the host
+     * with a half-closed month they have no way to see: the request failed, so
+     * their calendar still shows it open, and guests can book the rest of it.
+     * As one transaction it either all lands or none of it does.
+     *
+     * `createMany` writes the dates that had no row; `updateMany` then applies
+     * the same change to the ones that did. Re-stating the BOOKED/HELD
+     * exclusion in its `where` — rather than listing the pairs found above —
+     * also closes the gap between the read and the write: a date booked in
+     * between is skipped by the database rather than by a stale set.
+     */
+    await this.prisma.$transaction([
+      this.prisma.venueAvailability.createMany({ data: rows, skipDuplicates: true }),
+      this.prisma.venueAvailability.updateMany({
+        where: {
+          venueId,
+          date: { gte: fromIsoDate(body.from), lte: fromIsoDate(body.to) },
+          slot: { in: slots },
+          status: { notIn: [AvailabilityStatus.BOOKED, AvailabilityStatus.HELD] },
+        },
+        data: {
+          status,
+          ...(body.priceAmd !== undefined ? { priceAmd: body.priceAmd } : {}),
+          ...(body.note !== undefined ? { note: body.note } : {}),
+        },
+      }),
+    ]);
+
+    return { updated: rows.length, skipped };
   }
 
-  /** Reopen dates, and drop any one-off price with them. */
+  /**
+   * Reopen dates, and drop any one-off price with them.
+   *
+   * "Closed" is not the only thing this undoes: a date carrying a New Year rate
+   * is OPEN, so matching on BLOCKED alone would make that price permanent —
+   * there is no other route that clears it. The rule is therefore "anything the
+   * host set on a date nobody has taken", and a BOOKED or HELD date is left
+   * exactly as it is.
+   */
   async unblockDates(
     userId: string,
     venueId: string,
@@ -552,8 +638,14 @@ export class HostVenuesService {
         venueId,
         date: { gte: fromIsoDate(body.from), lte: fromIsoDate(body.to) },
         slot: { in: slots },
-        // Only dates the host closed. A booked date stays booked.
-        status: AvailabilityStatus.BLOCKED,
+        status: { notIn: [AvailabilityStatus.BOOKED, AvailabilityStatus.HELD] },
+        // Rows with nothing to undo are left alone, so `updated` counts dates
+        // that actually changed rather than every day in the range.
+        OR: [
+          { status: AvailabilityStatus.BLOCKED },
+          { priceAmd: { not: null } },
+          { note: { not: null } },
+        ],
       },
       data: { status: AvailabilityStatus.OPEN, priceAmd: null, note: null },
     });

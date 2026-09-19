@@ -15,11 +15,10 @@
 export const BALANCE_REMINDER_DAYS_BEFORE_DUE = 3;
 
 /**
- * Which `balanceDueOn` date today's reminder run should look for.
+ * Which `balanceDueOn` date today's reminder run is aiming at.
  *
- * Runs at a fixed date rather than a range: a range would re-notify every day
- * until the balance was paid, and the "already sent" check would be doing work
- * the arithmetic should have avoided.
+ * Exactly `BALANCE_REMINDER_DAYS_BEFORE_DUE` days out — the date a guest should
+ * hear about today if every run has fired on time.
  */
 export function balanceReminderTarget(
   today: string,
@@ -28,6 +27,23 @@ export function balanceReminderTarget(
   const date = new Date(`${today}T00:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() + daysBefore);
   return date.toISOString().slice(0, 10);
+}
+
+/**
+ * The `balanceDueOn` range today's run should sweep: today through the target.
+ *
+ * A single exact date would be tidier, but `@nestjs/schedule` does not replay a
+ * fire it missed — a deploy that straddles 10:00 would drop that day's cohort
+ * for good, and they would learn about the balance when it was already overdue.
+ * Sweeping the whole window costs nothing, because the "already notified" check
+ * is what actually decides who gets a message; the arithmetic only bounds the
+ * query.
+ */
+export function balanceReminderWindow(
+  today: string,
+  daysBefore = BALANCE_REMINDER_DAYS_BEFORE_DUE,
+): { from: string; to: string } {
+  return { from: today, to: balanceReminderTarget(today, daysBefore) };
 }
 
 /** The instant before which an unpaid hold has outlived its welcome. */

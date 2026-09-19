@@ -7,7 +7,7 @@ import { fromIsoDate, toIsoDate, todayInYerevan } from '../../common/utils/dates
 import { NotificationsService } from '../notifications/notifications.service';
 import { TokenService } from '../auth/token.service';
 import { loadEnv } from '../../config/env';
-import { balanceReminderTarget, holdCutoff } from './schedule-math';
+import { balanceReminderWindow, holdCutoff } from './schedule-math';
 
 /**
  * Scheduled work.
@@ -60,19 +60,21 @@ export class TasksService {
    * Remind guests whose balance is nearly due.
    *
    * The `notification already sent` check is what makes this safe to run twice:
-   * a retry, a restart at 09:00, or a second instance briefly enabled all find
-   * the existing row and send nothing.
+   * a retry, a restart, or a second instance briefly enabled all find the
+   * existing row and send nothing. It is also what lets the query sweep a
+   * window rather than a single date, so a run missed over a deploy is picked
+   * up by the next one instead of losing that day's guests.
    */
   @Cron('0 10 * * *', { name: 'balance-reminders', timeZone: 'Asia/Yerevan' })
   async sendBalanceReminders(): Promise<number> {
     if (!this.enabled) return 0;
 
-    const targetDate = balanceReminderTarget(todayInYerevan());
+    const window = balanceReminderWindow(todayInYerevan());
 
     const due = await this.prisma.booking.findMany({
       where: {
         status: BookingStatus.CONFIRMED,
-        balanceDueOn: fromIsoDate(targetDate),
+        balanceDueOn: { gte: fromIsoDate(window.from), lte: fromIsoDate(window.to) },
       },
       include: { venue: { select: { id: true, name: true } } },
     });
@@ -105,7 +107,7 @@ export class TasksService {
       sent += 1;
     }
 
-    if (sent > 0) this.logger.log(`Sent ${sent} balance reminder(s) for ${targetDate}`);
+    if (sent > 0) this.logger.log(`Sent ${sent} balance reminder(s) due by ${window.to}`);
     return sent;
   }
 
@@ -146,13 +148,32 @@ export class TasksService {
       select: { id: true, venueId: true, eventDate: true, slot: true },
     });
 
+    let released = 0;
+
     for (const booking of stale) {
-      await this.prisma.$transaction([
-        this.prisma.booking.update({
-          where: { id: booking.id },
+      /**
+       * The read above and this write are minutes apart on a long list, and a
+       * deposit can settle in between. So the conditions that selected the
+       * booking are re-asserted here as part of the write: if the payment
+       * webhook has already moved it to PENDING_HOST, `count` is 0, the date
+       * stays held, and the guest keeps the Saturday they just paid for.
+       *
+       * Expressed as `updateMany` rather than `update` precisely because it
+       * takes a `where` beyond the id and reports how many rows matched.
+       */
+      const expired = await this.prisma.$transaction(async (tx) => {
+        const { count } = await tx.booking.updateMany({
+          where: {
+            id: booking.id,
+            status: BookingStatus.AWAITING_DEPOSIT,
+            paidAmd: 0,
+          },
           data: { status: BookingStatus.EXPIRED, cancelledAt: new Date() },
-        }),
-        this.prisma.venueAvailability.updateMany({
+        });
+
+        if (count === 0) return false;
+
+        await tx.venueAvailability.updateMany({
           where: {
             venueId: booking.venueId,
             date: booking.eventDate,
@@ -160,11 +181,15 @@ export class TasksService {
             bookingId: booking.id,
           },
           data: { status: 'OPEN', bookingId: null },
-        }),
-      ]);
+        });
+
+        return true;
+      });
+
+      if (expired) released += 1;
     }
 
-    if (stale.length > 0) this.logger.log(`Released ${stale.length} unpaid hold(s)`);
-    return stale.length;
+    if (released > 0) this.logger.log(`Released ${released} unpaid hold(s)`);
+    return released;
   }
 }

@@ -3,6 +3,7 @@ import { publishBlockers, MIN_DESCRIPTION_LENGTH } from '../src/modules/venues/p
 import {
   BALANCE_REMINDER_DAYS_BEFORE_DUE,
   balanceReminderTarget,
+  balanceReminderWindow,
   holdCutoff,
 } from '../src/modules/tasks/schedule-math';
 
@@ -74,6 +75,31 @@ describe('balanceReminderTarget', () => {
     expect(balanceReminderTarget('2026-09-29')).toBe('2026-10-02');
     expect(balanceReminderTarget('2026-12-30')).toBe('2027-01-02');
     expect(balanceReminderTarget('2028-02-27')).toBe('2028-03-01'); // leap year
+  });
+});
+
+describe('balanceReminderWindow', () => {
+  it('runs from today to the target, so a missed run is picked up tomorrow', () => {
+    expect(balanceReminderWindow('2026-09-16')).toEqual({
+      from: '2026-09-16',
+      to: '2026-09-19',
+    });
+  });
+
+  it("still covers yesterday's cohort after a deploy straddles the run", () => {
+    // A guest whose balance falls due on the 19th should have been told on the
+    // 16th. If that run never fired, the 17th's window (17th-20th) still
+    // contains the 19th, and the already-notified check stops a double send.
+    const missed = balanceReminderTarget('2026-09-16');
+    const nextDay = balanceReminderWindow('2026-09-17');
+    expect(missed >= nextDay.from && missed <= nextDay.to).toBe(true);
+  });
+
+  it('crosses a month boundary at both ends', () => {
+    expect(balanceReminderWindow('2026-09-29')).toEqual({
+      from: '2026-09-29',
+      to: '2026-10-02',
+    });
   });
 });
 

@@ -120,8 +120,19 @@ export const addVenuePhotoSchema = z.object({
 export type AddVenuePhotoBody = z.infer<typeof addVenuePhotoSchema>;
 
 export const reorderVenuePhotosSchema = z.object({
-  /** Every photo id, in the order they should appear. The first is the cover. */
-  ids: z.array(idSchema).min(1).max(40),
+  /**
+   * Every photo id, in the order they should appear. The first is the cover.
+   *
+   * Distinct, and the server additionally checks the list is the venue's whole
+   * set: a list that names a photo twice is one photo short, and the one it
+   * leaves out keeps whatever position it had — which is the silent reordering
+   * bug this endpoint exists to avoid.
+   */
+  ids: z
+    .array(idSchema)
+    .min(1)
+    .max(40)
+    .refine((ids) => new Set(ids).size === ids.length, 'Each photo can only appear once'),
 });
 export type ReorderVenuePhotosBody = z.infer<typeof reorderVenuePhotosSchema>;
 
@@ -143,7 +154,15 @@ export const setVenueAddOnsSchema = z.object({
         mandatory: z.boolean().default(false),
       }),
     )
-    .max(20),
+    .max(20)
+    .refine(
+      (addOns) => new Set(addOns.map((addOn) => addOn.code)).size === addOns.length,
+      'Each code can only appear once',
+    )
+    .refine((addOns) => {
+      const ids = addOns.map((addOn) => addOn.id).filter(Boolean);
+      return new Set(ids).size === ids.length;
+    }, 'Each extra can only appear once'),
 });
 export type SetVenueAddOnsBody = z.infer<typeof setVenueAddOnsSchema>;
 

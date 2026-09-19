@@ -60,7 +60,8 @@ const generators = await getGenerators({
 
 try {
   for (const generator of generators) {
-    const name = generator.manifest?.prettyName ?? generator.options?.generator?.name ?? 'generator';
+    const name =
+      generator.manifest?.prettyName ?? generator.options?.generator?.name ?? 'generator';
     await generator.generate();
     console.log(`✔ ${name} generated (no engine)`);
   }

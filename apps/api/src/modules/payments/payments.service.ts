@@ -9,6 +9,7 @@ import {
   type Payment,
   type PaymentIntent,
   type PaymentStatusResponse,
+  type TimeSlot,
 } from '@zal/contracts';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { AppError } from '../../common/errors/app-error';
@@ -169,10 +170,35 @@ export class PaymentsService {
       return;
     }
 
+    /**
+     * A deposit can land on a booking whose hold has just been released — the
+     * guest pressed Pay at 12:00:03 and the expiry job ran at 12:00:00. The
+     * money moved, so the only question is what they get for it.
+     *
+     * If the date is still free, they get the booking: the hold is re-taken and
+     * the booking is revived, because that is what they paid for and nobody
+     * else has a claim on it. If somebody else has taken the date in between,
+     * the payment is recorded and the booking left expired, and the log says so
+     * loudly — that is a refund, and a refund is a human decision here.
+     */
+    const revivable =
+      payment.kind === 'DEPOSIT' && booking.status === BookingStatus.EXPIRED
+        ? await this.reclaimHold(booking)
+        : false;
+
+    const liveStatus = revivable ? BookingStatus.AWAITING_DEPOSIT : booking.status;
+
     const nextStatus =
-      payment.kind === 'DEPOSIT' && booking.status === BookingStatus.AWAITING_DEPOSIT
+      payment.kind === 'DEPOSIT' && liveStatus === BookingStatus.AWAITING_DEPOSIT
         ? BookingStatus.PENDING_HOST
         : booking.status;
+
+    if (payment.kind === 'DEPOSIT' && booking.status === BookingStatus.EXPIRED && !revivable) {
+      this.logger.error(
+        `Deposit ${payment.id} (${payment.amountAmd} AMD) settled for booking ${booking.ref}, ` +
+          'whose hold had already expired and whose date has since been taken. This owes a refund.',
+      );
+    }
 
     await this.prisma.$transaction([
       this.prisma.payment.update({
@@ -183,7 +209,7 @@ export class PaymentsService {
         where: { id: booking.id },
         data: {
           paidAmd: { increment: payment.amountAmd },
-          ...(nextStatus !== booking.status ? { status: nextStatus } : {}),
+          ...(nextStatus !== booking.status ? { status: nextStatus, cancelledAt: null } : {}),
         },
       }),
     ]);
@@ -248,6 +274,32 @@ export class PaymentsService {
 
     await this.settle(payment.id, payload.status === 'succeeded', payload.failureCode ?? undefined);
     return { ok: true };
+  }
+
+  /**
+   * Take the date back for a booking whose hold the expiry job released.
+   *
+   * `updateMany` scoped to `status: OPEN` is the whole guard: if another guest
+   * has taken the slot since, no row matches, nothing is written, and the
+   * caller learns the date is gone. The unique index on (venueId, date, slot)
+   * means there is exactly one row to win or lose.
+   */
+  private async reclaimHold(booking: {
+    id: string;
+    venueId: string;
+    eventDate: Date;
+    slot: TimeSlot;
+  }): Promise<boolean> {
+    const { count } = await this.prisma.venueAvailability.updateMany({
+      where: {
+        venueId: booking.venueId,
+        date: booking.eventDate,
+        slot: booking.slot,
+        status: 'OPEN',
+      },
+      data: { status: 'HELD', bookingId: booking.id },
+    });
+    return count > 0;
   }
 
   private handoffFor(
