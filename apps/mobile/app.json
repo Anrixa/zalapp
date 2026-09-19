@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Zal",
+    "slug": "zal",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "zal",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#A32638"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "am.zal.app",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "NSLocationWhenInUseUsageDescription": "Zal uses your location to show venues near you. You can browse without it."
+      }
+    },
+    "android": {
+      "package": "am.zal.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#A32638"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#A32638",
+          "image": "./assets/splash.png",
+          "imageWidth": 160
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

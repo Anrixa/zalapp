@@ -38,3 +38,6 @@ tmp/
 # MCP server configs can carry access tokens — never commit a populated one.
 .mcp.json
 mcp.local.json
+
+# Expo export output
+apps/mobile/dist-*/
