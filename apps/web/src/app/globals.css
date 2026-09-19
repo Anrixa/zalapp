@@ -1,0 +1,401 @@
+/*
+ * Zal — web styling.
+ *
+ * The tokens come from @zal/tokens as CSS custom properties, injected by the
+ * layout, so the palette lives in one package rather than being retyped here.
+ * What this file adds is the small set of component classes the design uses
+ * over and over: the pill button, the card, the chip, the input.
+ *
+ * Layout is mobile-first, because the design is a phone and most guests in
+ * Armenia will arrive on one. The `page` container widens on desktop instead of
+ * stretching a 390px column across a monitor.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--zal-font-body);
+  color: var(--zal-ink);
+  background: var(--zal-ivory);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--zal-pomegranate);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Respect a guest who has asked for less movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.display {
+  font-family: var(--zal-font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding-bottom: 96px;
+  background: var(--zal-ivory);
+}
+
+.page--wide {
+  max-width: 1120px;
+}
+
+.section {
+  padding: 0 24px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.spread {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.grow {
+  flex: 1;
+}
+
+.muted {
+  color: var(--zal-ink-soft);
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--zal-ink-muted);
+}
+
+.section-title {
+  font-family: var(--zal-font-display);
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 14px 24px;
+  border-radius: var(--zal-radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  transition:
+    transform 0.08s ease,
+    filter 0.15s ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--zal-pomegranate);
+  color: var(--zal-ivory);
+  box-shadow: 0 8px 20px -8px rgba(163, 38, 56, 0.55);
+}
+
+.btn--primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.btn--secondary {
+  background: var(--zal-white);
+  color: var(--zal-ink);
+  border: 1.5px solid var(--zal-line);
+}
+
+.btn--ghost {
+  color: var(--zal-pomegranate);
+  font-weight: 700;
+  min-height: 44px;
+  padding: 8px 12px;
+}
+
+.btn--danger {
+  border: 1.5px solid var(--zal-pomegranate-tint);
+  color: var(--zal-rust);
+  background: transparent;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--zal-radius-pill);
+  background: var(--zal-ivory-2);
+  color: var(--zal-ink);
+  flex-shrink: 0;
+}
+
+/* ── Surfaces ───────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--zal-white);
+  border: 1px solid var(--zal-card-line);
+  border-radius: var(--zal-radius-card);
+  padding: 20px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  min-height: 40px;
+  border-radius: var(--zal-radius-pill);
+  border: 1.5px solid var(--zal-line);
+  background: var(--zal-white);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--zal-ink-soft);
+  white-space: nowrap;
+}
+
+.chip[aria-pressed='true'],
+.chip--on {
+  background: var(--zal-ink);
+  border-color: var(--zal-ink);
+  color: var(--zal-ivory);
+}
+
+.badge {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: var(--zal-radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* ── Forms ──────────────────────────────────────────────────────────────── */
+
+.field {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.field > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 16px;
+  border-radius: var(--zal-radius-input);
+  border: 1.5px solid var(--zal-line);
+  background: var(--zal-white);
+  font-size: 15px;
+  color: var(--zal-ink);
+}
+
+.input::placeholder {
+  color: var(--zal-ink-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--zal-pomegranate);
+  box-shadow: 0 0 0 3px var(--zal-pomegranate-tint);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--zal-rust);
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--zal-rust);
+}
+
+.form-error {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: var(--zal-radius-input);
+  background: var(--zal-pomegranate-tint);
+  color: var(--zal-pomegranate-dark);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ── Scrollers and grids ────────────────────────────────────────────────── */
+
+.scroller {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 14px 24px 4px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.scroller > * {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+.venue-grid {
+  display: grid;
+  gap: 24px;
+  padding: 16px 24px 28px;
+}
+
+@media (min-width: 900px) {
+  .page--wide .venue-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+/* ── Loading ────────────────────────────────────────────────────────────── */
+
+.skeleton {
+  background: linear-gradient(90deg, var(--zal-ivory-2) 25%, #efe5d8 50%, var(--zal-ivory-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--zal-radius-card);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ── Bottom navigation ──────────────────────────────────────────────────── */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  background: var(--zal-white);
+  border-top: 1px solid var(--zal-card-line);
+  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  z-index: 20;
+}
+
+.bottom-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0;
+  min-height: 44px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--zal-ink-muted);
+}
+
+.bottom-nav a[aria-current='page'] {
+  color: var(--zal-pomegranate);
+}
+
+.sticky-bar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px calc(20px + env(safe-area-inset-bottom));
+  background: var(--zal-ivory);
+  border-top: 1px solid var(--zal-card-line);
+}
+
+/* Screen-reader-only text, for icon buttons and skip links. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

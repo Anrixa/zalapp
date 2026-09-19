@@ -1,0 +1,26 @@
+{
+  "name": "Zal color tokens",
+  "description": "Pomegranate + apricot on a warm ivory ground. Two accents share chroma/lightness family; ink is warm near-black, never pure #000.",
+  "colors": {
+    "pomegranate": { "value": "#A32638", "role": "Primary accent / primary CTA background" },
+    "pomegranateDark": { "value": "#7E1D2B", "role": "Primary hover / pressed state" },
+    "pomegranateTint": {
+      "value": "#F3DEDD",
+      "role": "Light badge background on pomegranate family"
+    },
+    "apricot": { "value": "#E8933A", "role": "Secondary accent — ratings, highlights, price tags" },
+    "apricotDark": { "value": "#CC7A26", "role": "Secondary hover / pressed state" },
+    "apricotTint": { "value": "#FBE9CE", "role": "Light badge background on apricot family" },
+    "sage": { "value": "#6E8368", "role": "Success / confirmed state" },
+    "sageTint": { "value": "#E3EADF", "role": "Success background" },
+    "rust": { "value": "#B23A2E", "role": "Destructive / alert / cancel" },
+    "ink": { "value": "#241A18", "role": "Primary text — warm near-black, never pure black" },
+    "inkSoft": { "value": "#6B5C56", "role": "Secondary / caption text" },
+    "inkMuted": { "value": "#A8998E", "role": "Placeholder / tertiary text" },
+    "ivory": { "value": "#FBF6EF", "role": "Page background (ground)" },
+    "ivory2": { "value": "#F4EBDD", "role": "Secondary surface — chips, icon buttons" },
+    "line": { "value": "#E7DACB", "role": "Borders, dividers, input outlines" },
+    "cardLine": { "value": "#EFE5D8", "role": "Card border, slightly softer than line" },
+    "white": { "value": "#FFFFFF", "role": "Card / input fill" }
+  }
+}

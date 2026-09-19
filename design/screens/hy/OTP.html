@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zal — հեռախոսի հաստատում</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+
+*{box-sizing:border-box}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#241A18;background:#FBF6EF}
+.display{font-family:'Fraunces',Georgia,serif}
+a{text-decoration:none}
+.otp{width:46px;height:56px;border-radius:14px;border:1.5px solid #E7DACB;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-family:'Fraunces',Georgia,serif;}
+.otp.on{border-color:#A32638;box-shadow:0 0 0 3px #F3DEDD;}
+.btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;background:#A32638;color:#FBF6EF;font-weight:600;font-size:16px;padding:17px;border-radius:999px;box-shadow:0 8px 20px -8px rgba(163,38,56,0.55);width:100%}
+
+
+html{background:#EFE5D8;}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:40px 16px;}
+</style>
+</head>
+<body>
+<div style="width:390px;height:844px;background:#FBF6EF;display:flex;flex-direction:column;">
+  <div style="padding:20px 24px 0;">
+    <a href="SignUp.html" style="width:40px;height:40px;border-radius:999px;background:#F4EBDD;display:inline-flex;align-items:center;justify-content:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#241A18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+  </div>
+
+  <div style="padding:28px 24px 0;flex:1;">
+    <div style="width:64px;height:64px;border-radius:20px;background:#FBE9CE;display:flex;align-items:center;justify-content:center;">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#CC7A26" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+    </div>
+    <h1 class="display" style="font-size:27px;font-weight:700;margin-top:20px;">Մուտքագրեք կոդը</h1>
+    <p style="margin-top:8px;font-size:14.5px;color:#6B5C56;line-height:1.5;">Մենք SMS-ով 6-նիշանոց կոդ ուղարկեցինք՝ <strong style="color:#241A18;">+374 77 123 456</strong>.</p>
+
+    <div style="display:flex;gap:10px;margin-top:28px;">
+      <div class="otp">4</div>
+      <div class="otp">8</div>
+      <div class="otp on">2</div>
+      <div class="otp"></div>
+      <div class="otp"></div>
+      <div class="otp"></div>
+    </div>
+
+    <div style="margin-top:22px;font-size:13.5px;color:#6B5C56;">
+      Չե&#39;ք ստացել: <a href="#" style="color:#A32638;font-weight:700;">Կրկին ուղարկել 0:42-ից հետո</a>
+    </div>
+  </div>
+
+  <div style="padding:16px 24px 36px;">
+    <a href="Home.html" class="btn-primary">Հաստատել և շարունակել</a>
+  </div>
+</div>
+</body>
+</html>

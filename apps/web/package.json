@@ -1,0 +1,33 @@
+{
+  "name": "@zal/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Zal web app — Next.js App Router.",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint --max-warnings 0",
+    "test": "echo \"no tests\" && exit 0",
+    "clean": "rm -rf .next .turbo"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.62.11",
+    "@zal/api-client": "workspace:*",
+    "@zal/contracts": "workspace:*",
+    "@zal/tokens": "workspace:*",
+    "next": "^14.2.21",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.21",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zal — իմ ամրագրումները</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+*{box-sizing:border-box}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#241A18;background:#FBF6EF}
+.display{font-family:'Fraunces',Georgia,serif}
+a{text-decoration:none;color:inherit}
+.tab{flex:1;text-align:center;padding:12px;border-radius:999px;font-size:13.5px;font-weight:700;color:#6B5C56;}
+.tab.on{background:#241A18;color:#FBF6EF;}
+.bcard{display:flex;gap:14px;padding:14px;border-radius:18px;background:#fff;border:1px solid #EFE5D8;margin-bottom:14px;}
+.badge{display:inline-flex;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;}
+
+
+html{background:#EFE5D8;}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:40px 16px;}
+</style>
+</head>
+<body>
+<div style="width:390px;height:510px;background:#FBF6EF;display:flex;flex-direction:column;">
+
+  <div style="padding:20px 24px 0;display:flex;align-items:center;gap:14px;">
+    <a href="Profile.html" style="width:40px;height:40px;border-radius:999px;background:#F4EBDD;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#241A18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <h1 class="display" style="font-size:20px;font-weight:700;">Իմ ամրագրումները</h1>
+  </div>
+
+  <div style="display:flex;gap:8px;padding:20px 24px 0;background:#F4EBDD;margin:20px 24px 0;border-radius:999px;padding:5px;">
+    <div class="tab on">Առաջիկա</div>
+    <div class="tab">Անցյալ</div>
+    <div class="tab">Չեղարկված</div>
+  </div>
+
+  <div style="padding:22px 24px 0;">
+    <a href="BookingDetail.html" class="bcard">
+      <div style="width:64px;height:64px;border-radius:14px;background:linear-gradient(160deg,#C7495A,#7E1D2B);flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="display" style="font-weight:700;font-size:15.5px;">Dvin Hall</div>
+          <div class="badge" style="background:#E3EADF;color:#3E4F35;">Հաստատված</div>
+        </div>
+        <div style="font-size:12.5px;color:#6B5C56;margin-top:5px;">շբթ, սեպ 26 &middot; Երեկո</div>
+        <div style="font-size:12.5px;color:#6B5C56;">180 հյուր</div>
+      </div>
+    </a>
+    <a href="BookingDetail.html" class="bcard">
+      <div style="width:64px;height:64px;border-radius:14px;background:linear-gradient(160deg,#F0AE5E,#B9701E);flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="display" style="font-weight:700;font-size:15.5px;">Zvartnots Այգի</div>
+          <div class="badge" style="background:#FBE9CE;color:#8A5A16;">Սպասվում է հաստատում</div>
+        </div>
+        <div style="font-size:12.5px;color:#6B5C56;margin-top:5px;">կիր, հոկ 18 &middot; Ցերեկ</div>
+        <div style="font-size:12.5px;color:#6B5C56;">90 հյուր &middot; Մկրտություն</div>
+      </div>
+    </a>
+    <a href="BookingDetail.html" class="bcard" style="margin-bottom:0;opacity:0.6;">
+      <div style="width:64px;height:64px;border-radius:14px;background:linear-gradient(160deg,#4A3B37,#241A18);flex-shrink:0;"></div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div class="display" style="font-weight:700;font-size:15.5px;">Nairi Բանկետ House</div>
+          <div class="badge" style="background:#F3DEDD;color:#7E1D2B;">Կանխավճար է պահանջվում</div>
+        </div>
+        <div style="font-size:12.5px;color:#6B5C56;margin-top:5px;">ուրբ, նոյ 6 &middot; Երեկո</div>
+        <div style="font-size:12.5px;color:#6B5C56;">300 հյուր &middot; Կորպորատիվ</div>
+      </div>
+    </a>
+  </div>
+
+  <div style="flex:1;"></div>
+</div>
+</body>
+</html>

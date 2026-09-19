@@ -1,0 +1,47 @@
+{
+  "name": "Zal type tokens",
+  "families": {
+    "display": {
+      "value": "'Fraunces', Georgia, serif",
+      "role": "Headlines, big numbers, the wordmark",
+      "googleFont": "Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700"
+    },
+    "body": {
+      "value": "'Plus Jakarta Sans', system-ui, sans-serif",
+      "role": "Everything else — labels, buttons, body copy",
+      "googleFont": "Plus+Jakarta+Sans:wght@400;500;600;700;800"
+    }
+  },
+  "weights": {
+    "regular": 400,
+    "medium": 500,
+    "semibold": 600,
+    "bold": 700,
+    "extrabold": 800
+  },
+  "scale": {
+    "display-xl": {
+      "size": "56px",
+      "family": "display",
+      "weight": 700,
+      "use": "Brand kit hero line only"
+    },
+    "h1": { "size": "24-30px", "family": "display", "weight": 700, "use": "Screen titles" },
+    "h2": { "size": "18-19px", "family": "display", "weight": 700, "use": "Section headings" },
+    "body": { "size": "14-15px", "family": "body", "weight": 400, "use": "Paragraph copy" },
+    "label": {
+      "size": "12-13px",
+      "family": "body",
+      "weight": 700,
+      "use": "Form labels, eyebrow text"
+    },
+    "button": { "size": "15-16px", "family": "body", "weight": 600, "use": "Button text" },
+    "caption": {
+      "size": "11-12px",
+      "family": "body",
+      "weight": 700,
+      "use": "Meta text, badges, timestamps"
+    }
+  },
+  "note": "Never Inter / Roboto / Arial — those read as generic AI-app defaults. Fraunces gives the brand its warmth; Plus Jakarta Sans keeps the UI legible and current."
+}

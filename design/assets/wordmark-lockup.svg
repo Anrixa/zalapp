@@ -1,0 +1,6 @@
+<svg width="220" height="64" viewBox="0 0 220 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="16" fill="#A32638"/>
+  <path d="M20 46V29A9 9 0 0 1 38 29V46" stroke="#FBF6EF" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="29" cy="38" r="3" fill="#E8933A"/>
+  <text x="80" y="43" font-family="Fraunces, Georgia, serif" font-size="34" font-weight="700" fill="#241A18">Zal</text>
+</svg>

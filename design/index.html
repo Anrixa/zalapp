@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zal — design hand-off pack</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#FBF6EF;color:#241A18;}
+  .display{font-family:'Fraunces',Georgia,serif}
+  a{color:inherit;text-decoration:none}
+  header{padding:48px 32px 24px;max-width:1100px;margin:0 auto;}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#A8998E}
+  h1{font-family:'Fraunces',Georgia,serif;font-size:36px;margin:8px 0 0;}
+  .sub{color:#6B5C56;font-size:15px;margin-top:10px;max-width:640px;line-height:1.6;}
+  .locales{display:flex;gap:10px;margin-top:24px;}
+  .loc-btn{padding:10px 18px;border-radius:999px;border:1.5px solid #E7DACB;background:#fff;font-weight:700;font-size:13.5px;cursor:pointer;color:#6B5C56;}
+  .loc-btn.on{background:#241A18;border-color:#241A18;color:#FBF6EF;}
+  main{max-width:1100px;margin:0 auto;padding:0 32px 80px;}
+  .row{margin-top:36px;}
+  .row h2{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#A32638;margin:0 0 14px;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;}
+  .card{display:block;padding:16px;border-radius:16px;background:#fff;border:1px solid #EFE5D8;transition:border-color .15s;}
+  .card:hover{border-color:#A32638;}
+  .card .n{font-weight:700;font-size:14px;}
+  .card .s{font-size:12px;color:#A8998E;margin-top:4px;}
+  .extras{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;}
+  .extras a{padding:12px 18px;border-radius:999px;background:#F4EBDD;font-weight:700;font-size:13.5px;}
+  footer{padding:32px;text-align:center;color:#A8998E;font-size:12.5px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">Zal &middot; design hand-off pack</div>
+  <h1>Venue booking app &mdash; 19 screens &times; 3 languages</h1>
+  <p class="sub">Static, dependency-free HTML exports of every screen in the Zal prototype, in English, Armenian (հայերեն) and Russian (русский). Open any card below directly in a browser &mdash; no build step needed.</p>
+  <div class="locales">
+    <button class="loc-btn on" data-loc="en" onclick="setLoc('en')">English</button>
+    <button class="loc-btn" data-loc="hy" onclick="setLoc('hy')">Հայերեն</button>
+    <button class="loc-btn" data-loc="ru" onclick="setLoc('ru')">Русский</button>
+  </div>
+</header>
+<main>
+  <div class="row">
+    <h2>Onboarding &amp; auth</h2>
+    <div class="cards">
+      <a class="card" data-file="Main.html"><div class="n">Splash</div><div class="s">Main.html</div></a>
+      <a class="card" data-file="Onboarding.html"><div class="n">Onboarding</div><div class="s">Onboarding.html</div></a>
+      <a class="card" data-file="SignUp.html"><div class="n">Create account</div><div class="s">SignUp.html</div></a>
+      <a class="card" data-file="OTP.html"><div class="n">Verify phone</div><div class="s">OTP.html</div></a>
+      <a class="card" data-file="Login.html"><div class="n">Log in</div><div class="s">Login.html</div></a>
+    </div>
+  </div>
+  <div class="row">
+    <h2>Discover &amp; search</h2>
+    <div class="cards">
+      <a class="card" data-file="Home.html"><div class="n">Home / Discover</div><div class="s">Home.html</div></a>
+      <a class="card" data-file="Search.html"><div class="n">Search results</div><div class="s">Search.html</div></a>
+      <a class="card" data-file="Filters.html"><div class="n">Filters</div><div class="s">Filters.html</div></a>
+    </div>
+  </div>
+  <div class="row">
+    <h2>Booking flow</h2>
+    <div class="cards">
+      <a class="card" data-file="VenueDetail.html"><div class="n">Venue detail</div><div class="s">VenueDetail.html</div></a>
+      <a class="card" data-file="BookingDate.html"><div class="n">Choose date &amp; time</div><div class="s">BookingDate.html</div></a>
+      <a class="card" data-file="Checkout.html"><div class="n">Review &amp; pay</div><div class="s">Checkout.html</div></a>
+      <a class="card" data-file="Payment.html"><div class="n">Payment</div><div class="s">Payment.html</div></a>
+      <a class="card" data-file="Confirmation.html"><div class="n">Booking confirmed</div><div class="s">Confirmation.html</div></a>
+    </div>
+  </div>
+  <div class="row">
+    <h2>Bookings, saved &amp; alerts</h2>
+    <div class="cards">
+      <a class="card" data-file="MyBookings.html"><div class="n">My bookings</div><div class="s">MyBookings.html</div></a>
+      <a class="card" data-file="BookingDetail.html"><div class="n">Booking detail</div><div class="s">BookingDetail.html</div></a>
+      <a class="card" data-file="Favorites.html"><div class="n">Saved venues</div><div class="s">Favorites.html</div></a>
+      <a class="card" data-file="Notifications.html"><div class="n">Notifications</div><div class="s">Notifications.html</div></a>
+    </div>
+  </div>
+  <div class="row">
+    <h2>Account</h2>
+    <div class="cards">
+      <a class="card" data-file="Profile.html"><div class="n">Profile</div><div class="s">Profile.html</div></a>
+      <a class="card" data-file="Settings.html"><div class="n">Settings</div><div class="s">Settings.html</div></a>
+    </div>
+  </div>
+  <div class="row">
+    <h2>Reference</h2>
+    <div class="extras">
+      <a href="screens/Brand.html">Brand &amp; UI kit</a>
+      <a href="components/BottomNav.html">Component: Bottom nav</a>
+      <a href="components/VenueCard.html">Component: Venue card</a>
+      <a href="design-tokens/colors.json">design-tokens/colors.json</a>
+      <a href="design-tokens/typography.json">design-tokens/typography.json</a>
+      <a href="design-tokens/tokens.css">design-tokens/tokens.css</a>
+      <a href="assets/mark.svg">assets/mark.svg</a>
+    </div>
+  </div>
+</main>
+<footer>Zal design pack &middot; generated with Claude</footer>
+<script>
+  var loc = 'en';
+  function apply() {
+    document.querySelectorAll('.card[data-file]').forEach(function(el){
+      el.setAttribute('href', 'screens/' + loc + '/' + el.getAttribute('data-file'));
+    });
+  }
+  function setLoc(l) {
+    loc = l;
+    document.querySelectorAll('.loc-btn').forEach(function(b){
+      b.classList.toggle('on', b.getAttribute('data-loc') === l);
+    });
+    apply();
+  }
+  apply();
+</script>
+</body>
+</html>

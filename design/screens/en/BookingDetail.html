@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zal — booking detail</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+*{box-sizing:border-box}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#241A18;background:#FBF6EF}
+.display{font-family:'Fraunces',Georgia,serif}
+a{text-decoration:none;color:inherit}
+.row{display:flex;justify-content:space-between;font-size:13.5px;padding:6px 0;}
+.act{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;background:#fff;border:1px solid #EFE5D8;margin-bottom:10px;}
+
+
+html{background:#EFE5D8;}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:40px 16px;}
+</style>
+</head>
+<body>
+<div style="width:390px;height:970px;background:#FBF6EF;display:flex;flex-direction:column;">
+
+  <div style="padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;">
+    <a href="MyBookings.html" style="width:40px;height:40px;border-radius:999px;background:#F4EBDD;display:inline-flex;align-items:center;justify-content:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#241A18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </a>
+    <span class="badge" style="display:inline-flex;padding:6px 12px;border-radius:999px;font-size:11.5px;font-weight:800;background:#E3EADF;color:#3E4F35;">CONFIRMED</span>
+  </div>
+
+  <div style="padding:22px 24px 0;">
+    <div style="border-radius:22px;background:#fff;border:1px solid #EFE5D8;overflow:hidden;">
+      <div style="height:150px;background:linear-gradient(160deg,#C7495A,#7E1D2B);"></div>
+      <div style="padding:20px;">
+        <div class="display" style="font-size:19px;font-weight:700;">Dvin Hall</div>
+        <div style="font-size:12.5px;color:#6B5C56;margin-top:4px;">Baghramyan Ave 24, Kentron, Yerevan</div>
+
+        <div style="display:flex;margin-top:18px;">
+          <div style="flex:1;"><div style="font-size:11px;color:#A8998E;font-weight:700;">DATE</div><div style="font-weight:800;font-size:14px;margin-top:3px;">Sep 26, 2026</div></div>
+          <div style="flex:1;"><div style="font-size:11px;color:#A8998E;font-weight:700;">TIME</div><div style="font-weight:800;font-size:14px;margin-top:3px;">18:00&ndash;23:59</div></div>
+          <div style="flex:1;"><div style="font-size:11px;color:#A8998E;font-weight:700;">GUESTS</div><div style="font-weight:800;font-size:14px;margin-top:3px;">180</div></div>
+        </div>
+
+        <div style="position:relative;margin:20px -20px 0;">
+          <div style="border-top:1.5px dashed #E7DACB;"></div>
+          <div style="position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:999px;background:#FBF6EF;"></div>
+          <div style="position:absolute;right:-9px;top:-9px;width:18px;height:18px;border-radius:999px;background:#FBF6EF;"></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin-top:20px;">
+          <div style="width:88px;height:88px;border-radius:12px;background:repeating-conic-gradient(#241A18 0 25%,#FBF6EF 0 50%) 0 0/12px 12px;flex-shrink:0;"></div>
+          <div>
+            <div style="font-size:11px;color:#A8998E;font-weight:700;">BOOKING REF</div>
+            <div class="display" style="font-weight:700;font-size:16px;margin-top:3px;">ZAL&ndash;20260926&ndash;07</div>
+            <div style="font-size:12px;color:#6B5C56;margin-top:6px;">Show this code at check-in</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:22px 24px 0;">
+    <div style="font-weight:800;font-size:14.5px;margin-bottom:12px;">Payment</div>
+    <div class="row"><span style="color:#6B5C56;">Total</span><span style="font-weight:700;">504,000 AMD</span></div>
+    <div class="row"><span style="color:#6B5C56;">Paid (deposit)</span><span style="font-weight:700;color:#54683F;">&minus;100,800 AMD</span></div>
+    <div class="row" style="border-top:1px solid #EFE5D8;padding-top:12px;margin-top:4px;"><span style="font-weight:800;">Balance due Sep 19</span><span class="display" style="font-weight:700;font-size:15.5px;">403,200 AMD</span></div>
+  </div>
+
+  <div style="padding:22px 24px 0;">
+    <div class="act">
+      <div style="width:40px;height:40px;border-radius:999px;background:#A32638;color:#FBF6EF;display:flex;align-items:center;justify-content:center;font-weight:700;font-family:'Fraunces',Georgia,serif;">MK</div>
+      <div style="flex:1;font-weight:700;font-size:14px;">Message Marine, your host</div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8998E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+    <div class="act">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#241A18" stroke-width="1.7"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.3"/></svg>
+      <div style="flex:1;font-weight:700;font-size:14px;">Get directions</div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8998E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+    <div class="act" style="margin-bottom:0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#241A18" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      <div style="flex:1;font-weight:700;font-size:14px;">Add to calendar</div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A8998E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>
+  </div>
+
+  <div style="flex:1;"></div>
+  <div style="padding:16px 24px 36px;text-align:center;">
+    <a href="#" style="font-size:13.5px;font-weight:700;color:#B23A2E;">Cancel this booking</a>
+  </div>
+</div>
+</body>
+</html>

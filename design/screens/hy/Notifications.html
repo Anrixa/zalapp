@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zal — ծանուցումներ</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+*{box-sizing:border-box}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#241A18;background:#FBF6EF}
+.display{font-family:'Fraunces',Georgia,serif}
+a{text-decoration:none;color:inherit}
+.label{font-size:12px;font-weight:800;color:#A8998E;letter-spacing:.06em;text-transform:uppercase;margin:0 24px 12px;}
+.notif{display:flex;gap:12px;padding:14px 24px;position:relative;}
+.notif.unread{background:#FBF2E8;}
+.ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+.tab{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;padding:10px 0 8px;color:#A8998E;text-decoration:none;}
+.tab.on{color:#A32638}
+.tab span{font-size:11px;font-weight:700;letter-spacing:.01em}
+html{background:#EFE5D8;}
+body{margin:0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:40px 16px;}
+</style>
+</head>
+<body>
+<div style="width:390px;height:710px;background:#FBF6EF;display:flex;flex-direction:column;">
+
+  <div style="padding:22px 24px 0;display:flex;align-items:center;justify-content:space-between;">
+    <h1 class="display" style="font-size:24px;font-weight:700;">Ծանուցումներ</h1>
+    <a href="#" style="font-size:13px;font-weight:700;color:#A32638;">Նշել բոլորը կարդացված</a>
+  </div>
+
+  <div style="margin-top:24px;">
+    <div class="label">Այսօր</div>
+
+    <a class="notif unread" href="BookingDetail.html">
+      <div class="ic" style="background:#E3EADF;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#54683F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div style="flex:1;">
+        <div style="font-size:13.5px;line-height:1.4;"><strong>Marine K.</strong> հաստատեց ձեր ամրագրումը Dvin Hall-ում սեպ 26-ի համար:</div>
+        <div style="font-size:11.5px;color:#A8998E;margin-top:4px;">2 ժամ առաջ</div>
+      </div>
+      <div style="width:8px;height:8px;border-radius:999px;background:#A32638;flex-shrink:0;margin-top:6px;"></div>
+    </a>
+
+    <a class="notif unread" href="BookingDetail.html">
+      <div class="ic" style="background:#FBE9CE;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#CC7A26" stroke-width="1.8"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <div style="flex:1;">
+        <div style="font-size:13.5px;line-height:1.4;">Dvin Hall-ի մնացորդի գումարը <strong>403,200 AMD</strong> վճարման ենթակա է 7 օրից:</div>
+        <div style="font-size:11.5px;color:#A8998E;margin-top:4px;">5 ժամ առաջ</div>
+      </div>
+      <div style="width:8px;height:8px;border-radius:999px;background:#A32638;flex-shrink:0;margin-top:6px;"></div>
+    </a>
+  </div>
+
+  <div style="margin-top:8px;">
+    <div class="label" style="margin-top:14px;">Ավելի վաղ</div>
+
+    <a class="notif" href="BookingDetail.html">
+      <div class="ic" style="background:#F3DEDD;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A32638" stroke-width="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20l1-5.3A8.5 8.5 0 1 1 21 11.5Z"/></svg></div>
+      <div style="flex:1;">
+        <div style="font-size:13.5px;line-height:1.4;">New message from <strong>Marine K.</strong> about your table layout.</div>
+        <div style="font-size:11.5px;color:#A8998E;margin-top:4px;">Երեկ</div>
+      </div>
+    </a>
+
+    <a class="notif" href="VenueDetail.html">
+      <div class="ic" style="background:#E3EADF;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#54683F" stroke-width="1.8"><path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-7h6v7"/></svg></div>
+      <div style="flex:1;">
+        <div style="font-size:13.5px;line-height:1.4;"><strong>Zvartnots Այգի</strong> նվազեցրեց գինը 8%-ով հոկտեմբերի ամսաթվերի համար:</div>
+        <div style="font-size:11.5px;color:#A8998E;margin-top:4px;">2 օր առաջ</div>
+      </div>
+    </a>
+
+    <a class="notif" href="#">
+      <div class="ic" style="background:#F4EBDD;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B5C56" stroke-width="1.8"><path d="M12 2.5 15 9l7 .9-5.1 4.8L18.2 21 12 17.4 5.8 21 7.1 14.7 2 9.9 9 9Z"/></svg></div>
+      <div style="flex:1;">
+        <div style="font-size:13.5px;line-height:1.4;">Your review for <strong>Ararat Terrace</strong> is now live.</div>
+        <div style="font-size:11.5px;color:#A8998E;margin-top:4px;">5 օր առաջ</div>
+      </div>
+    </a>
+  </div>
+
+  <div style="flex:1;"></div>
+  <div style="width:390px;height:84px;background:#FFFFFF;border-top:1px solid #EFE5D8;display:flex;align-items:stretch;box-shadow:0 -8px 24px -16px rgba(36,26,24,0.25);">
+  <a class="tab" href="Home.html" aria-label="Home">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5 12 3l8.5 7.5"/><path d="M5.5 9.5V20a1 1 0 0 0 1 1H10a1 1 0 0 0 1-1v-4.5a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1V20a1 1 0 0 0 1 1h3.5a1 1 0 0 0 1-1V9.5"/></svg>
+    <span>Գլխավոր</span>
+  </a>
+  <a class="tab" href="Search.html" aria-label="Search">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.3" y2="16.3"/></svg>
+    <span>Փնտրել</span>
+  </a>
+  <a class="tab" href="Favorites.html" aria-label="Saved">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.2s-7.7-4.6-9.9-9.4C.6 7.6 2.2 4.4 5.4 3.7c2-.4 3.9.4 5 2.1a.7.7 0 0 0 1.2 0c1.1-1.7 3-2.5 5-2.1 3.2.7 4.8 3.9 3.3 7.1-2.2 4.8-9.9 9.4-9.9 9.4Z"/></svg>
+    <span>Պահպանված</span>
+  </a>
+  <a class="tab on" href="Notifications.html" aria-label="Alerts">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 1 1 12 0c0 3 1 4.5 1.7 5.4a1 1 0 0 1-.8 1.6H5.1a1 1 0 0 1-.8-1.6C5 13.5 6 12 6 9Z"/><path d="M9.5 19a2.5 2.5 0 0 0 5 0"/></svg>
+    <span>Ծանուցումներ</span>
+  </a>
+  <a class="tab" href="Profile.html" aria-label="Profile">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.2" r="3.4"/><path d="M4.8 20c1-3.2 4-5 7.2-5s6.2 1.8 7.2 5"/></svg>
+    <span>Պրոֆիլ</span>
+  </a>
+</div>
+</div>
+</body>
+</html>

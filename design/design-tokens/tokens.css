@@ -1,0 +1,33 @@
+/* Zal design tokens — CSS custom properties for direct dev handoff. */
+:root {
+  /* Color */
+  --zal-pomegranate: #A32638;
+  --zal-pomegranate-dark: #7E1D2B;
+  --zal-pomegranate-tint: #F3DEDD;
+  --zal-apricot: #E8933A;
+  --zal-apricot-dark: #CC7A26;
+  --zal-apricot-tint: #FBE9CE;
+  --zal-sage: #6E8368;
+  --zal-sage-tint: #E3EADF;
+  --zal-rust: #B23A2E;
+  --zal-ink: #241A18;
+  --zal-ink-soft: #6B5C56;
+  --zal-ink-muted: #A8998E;
+  --zal-ivory: #FBF6EF;
+  --zal-ivory-2: #F4EBDD;
+  --zal-line: #E7DACB;
+  --zal-card-line: #EFE5D8;
+
+  /* Type */
+  --zal-font-display: 'Fraunces', Georgia, serif;
+  --zal-font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Radii — three-tier shape language */
+  --zal-radius-pill: 999px;   /* primary buttons only */
+  --zal-radius-card: 20px;    /* cards, photos, sheets */
+  --zal-radius-input: 14px;   /* inputs, chips */
+
+  /* Elevation */
+  --zal-shadow-cta: 0 8px 20px -8px rgba(163, 38, 56, 0.55);
+  --zal-shadow-card: 0 8px 20px -8px rgba(36, 26, 24, 0.12);
+}
