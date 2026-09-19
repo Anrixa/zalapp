@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import {
   useInfiniteQuery,
   useMutation,
@@ -9,6 +10,7 @@ import type {
   CancelBookingBody,
   CreateBookingBody,
   CreatePaymentIntentBody,
+  CreateReviewBody,
   FavoriteState,
   ListBookingsQuery,
   ListNotificationsQuery,
@@ -253,14 +255,52 @@ export function useCreatePaymentIntent() {
  */
 export function usePaymentStatus(paymentId: string | undefined, enabled = true) {
   const api = useZalApi();
+  const queryClient = useQueryClient();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['payments', paymentId],
     queryFn: () => api.payments.status(paymentId as string),
     enabled: Boolean(paymentId) && enabled,
     refetchInterval: (query) => {
       const status = query.state.data?.payment.status;
       return status === 'PENDING' || status === 'PROCESSING' ? 2000 : false;
+    },
+  });
+
+  /**
+   * Settling a payment moves the booking on, so the booking has to be refetched
+   * too. The realtime socket normally does this, but polling is what runs when
+   * the socket is *not* connected — so without this the one path that exists
+   * for a bad network would leave the guest looking at "awaiting deposit" on a
+   * booking they had just paid for.
+   */
+  const settled = query.data?.payment.status;
+  useEffect(() => {
+    if (settled !== 'SUCCEEDED' && settled !== 'REFUNDED') return;
+    void queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.me.all });
+  }, [settled, queryClient]);
+
+  return query;
+}
+
+/**
+ * Leave a review.
+ *
+ * The venue's rating is recomputed server-side from the rows, so the venue is
+ * invalidated alongside the booking rather than nudged locally — a stale
+ * average on the page the guest just contributed to is the one place it would
+ * be noticed.
+ */
+export function useCreateReview(bookingId: string) {
+  const api = useZalApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: Omit<CreateReviewBody, 'bookingId'>) => api.bookings.review(bookingId, body),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.venues.all });
     },
   });
 }

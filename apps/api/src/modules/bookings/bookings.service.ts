@@ -32,6 +32,7 @@ import { toBookingDetail, toBookingSummary, type BookingWithEverything } from '.
 const DETAIL_INCLUDE = {
   addOns: true,
   conversation: { select: { id: true } },
+  review: { select: { id: true } },
   venue: {
     include: {
       images: { orderBy: { position: 'asc' } },

@@ -24,6 +24,7 @@ export type BookingWithEverything = BookingWithVenue & {
     host: HostProfile & { user?: Pick<User, 'avatarUrl'> | null };
   };
   conversation?: { id: string } | null;
+  review?: { id: string } | null;
 };
 
 export function toBookingSummary(
@@ -118,5 +119,6 @@ export function toBookingDetail(
     confirmedAt: booking.confirmedAt?.toISOString() ?? null,
     cancelledAt: booking.cancelledAt?.toISOString() ?? null,
     conversationId: booking.conversation?.id ?? null,
+    hasReview: Boolean(booking.review),
   };
 }

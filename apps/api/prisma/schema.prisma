@@ -358,6 +358,8 @@ model Venue {
   @@index([status, city])
   @@index([type])
   @@index([ratingAvg])
+  // The host's own list of venues, and the ownership check on every /host route.
+  @@index([hostProfileId, status])
   @@map("venues")
 }
 
@@ -501,6 +503,12 @@ model Booking {
   @@index([userId, status])
   @@index([venueId, eventDate])
   @@index([status, eventDate])
+  // Creating a booking counts the day's bookings to number the reference, so
+  // this runs once per booking and must not be a sequential scan.
+  @@index([eventDate])
+  // The nightly balance reminder, and the half-hourly release of unpaid holds.
+  @@index([status, balanceDueOn])
+  @@index([status, createdAt])
   @@map("bookings")
 }
 
@@ -643,6 +651,8 @@ model Conversation {
 
   @@unique([venueId, guestId])
   @@index([guestId, lastMessageAt])
+  // The same list seen from the other side: a host's inbox across their venues.
+  @@index([hostProfileId, lastMessageAt])
   @@map("conversations")
 }
 

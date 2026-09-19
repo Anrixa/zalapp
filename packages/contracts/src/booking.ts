@@ -50,6 +50,14 @@ export const bookingDetailSchema = bookingSummarySchema.extend({
   confirmedAt: isoDateTimeSchema.nullable(),
   cancelledAt: isoDateTimeSchema.nullable(),
   conversationId: idSchema.nullable(),
+  /**
+   * Whether this booking has already been reviewed.
+   *
+   * Carried on the booking rather than discovered by attempting to post one:
+   * offering a form and then rejecting it is a worse answer than not offering
+   * it, and the server refuses a second review either way.
+   */
+  hasReview: z.boolean(),
 });
 export type BookingDetail = z.infer<typeof bookingDetailSchema>;
 

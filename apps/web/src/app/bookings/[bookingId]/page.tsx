@@ -2,8 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useBooking, useBookingCalendarLinks, useCancelBooking } from '@zal/api-client';
-import { SLOT_HOURS, formatAmdPlain } from '@zal/contracts';
+import {
+  useBooking,
+  useBookingCalendarLinks,
+  useCancelBooking,
+  useCreateReview,
+} from '@zal/api-client';
+import { BookingStatus, SLOT_HOURS, formatAmdPlain } from '@zal/contracts';
+import type { BookingDetail } from '@zal/contracts';
 import { Avatar, Button, ErrorNote, ScreenHeader, Spinner, StatusBadge } from '@/components/ui';
 import { CalendarIcon, MessageIcon, PinIcon } from '@/components/icons';
 import { formatShortDate } from '@/lib/format';
@@ -179,6 +185,10 @@ export default function BookingDetailPage({ params }: { params: { bookingId: str
         </Button>
       </section>
 
+      {booking.status === BookingStatus.COMPLETED && !booking.hasReview && (
+        <ReviewForm booking={booking} />
+      )}
+
       {preview && (
         <section className="section" style={{ paddingTop: 24, paddingBottom: 40 }}>
           <ErrorNote error={cancelBooking.error} />
@@ -233,5 +243,94 @@ function Fact({ label, value }: { label: string; value: string }) {
       <dt style={{ fontSize: 11, fontWeight: 700, color: 'var(--zal-ink-muted)' }}>{label}</dt>
       <dd style={{ margin: '4px 0 0', fontWeight: 800, fontSize: 15 }}>{value}</dd>
     </div>
+  );
+}
+
+/**
+ * Leaving a review.
+ *
+ * Offered only on a completed booking that has not been reviewed — the server
+ * enforces both, and showing a form it would refuse is a worse answer than not
+ * showing one. The rating is a radio group rather than five buttons so that it
+ * is a single tab stop and announces itself as a choice of five.
+ */
+function ReviewForm({ booking }: { booking: BookingDetail }) {
+  const t = useT();
+  const createReview = useCreateReview(booking.id);
+  const [rating, setRating] = useState(0);
+  const [body, setBody] = useState('');
+
+  if (createReview.isSuccess) {
+    return (
+      <section className="section" style={{ paddingTop: 24 }}>
+        <p className="card" style={{ margin: 0, color: 'var(--zal-ink-soft)', fontSize: 14 }}>
+          {t('Thanks — your review is live.')}
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="section" style={{ paddingTop: 24 }}>
+      <h2 className="section-title" style={{ marginBottom: 12 }}>
+        {t('How was it?')}
+      </h2>
+
+      <form
+        className="card"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (rating === 0) return;
+          createReview.mutate({ rating, ...(body.trim() ? { body: body.trim() } : {}) });
+        }}
+      >
+        <ErrorNote error={createReview.error} />
+
+        <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+          <legend className="sr-only">{t('Your rating')}</legend>
+          <div className="row" style={{ gap: 6 }}>
+            {[1, 2, 3, 4, 5].map((value) => (
+              <label
+                key={value}
+                className="icon-btn"
+                style={{
+                  cursor: 'pointer',
+                  background: value <= rating ? 'var(--zal-apricot-tint)' : 'var(--zal-white)',
+                  border: '1px solid var(--zal-card-line)',
+                  color: value <= rating ? 'var(--zal-apricot-dark)' : 'var(--zal-ink-muted)',
+                  fontWeight: 700,
+                }}
+              >
+                <input
+                  type="radio"
+                  name="rating"
+                  value={value}
+                  checked={rating === value}
+                  onChange={() => setRating(value)}
+                  className="sr-only"
+                />
+                {value}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <label htmlFor="review-body" className="label" style={{ marginTop: 16, display: 'block' }}>
+          {t('Add anything else?')} <span className="muted">{t('(optional)')}</span>
+        </label>
+        <textarea
+          id="review-body"
+          value={body}
+          maxLength={2000}
+          rows={4}
+          onChange={(event) => setBody(event.target.value)}
+          style={{ width: '100%', marginTop: 6 }}
+        />
+
+        <Button type="submit" block disabled={rating === 0} loading={createReview.isPending}>
+          {t('Post review')}
+        </Button>
+      </form>
+    </section>
   );
 }
