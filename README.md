@@ -83,9 +83,19 @@ packages/
   contracts/  Zod schemas, enums, API route map, pricing engine  (@zal/contracts)
   api-client/ Typed HTTP + WS client and React Query hooks       (@zal/api-client)
   tokens/     Zal design tokens: color, type, radii, spacing     (@zal/tokens)
+  i18n/       Armenian, English and Russian UI copy              (@zal/i18n)
+design/
+  screens/{en,hy,ru}   the 19 screens as standalone HTML, in three languages
+  design-tokens/       colors.json, typography.json, tokens.css
+  assets/              the arch mark and app-icon lockups
 infra/
   docker-compose.yml   PostgreSQL, Redis, MinIO, Mailpit for local development
 ```
+
+`design/` is the hand-off pack the apps are wired to, vendored so the source of
+truth travels with the code. `@zal/tokens` mirrors its token files; `@zal/i18n`
+is extracted from its localised screens by
+`pnpm --filter @zal/i18n extract`.
 
 ---
 
@@ -177,6 +187,20 @@ keys, so screens refresh without polling.
 
 ---
 
+## Languages
+
+Three locales, Armenian first — the app is for the Armenian market and
+defaulting to English would be a small daily insult to most of the people using
+it. The 208 translated strings come from the design pack's own `hy/` and `ru/`
+screens, so they are the designer's wording rather than a machine's.
+
+Keys are the English strings themselves, so a missing translation degrades to
+English rather than to `venue.detail.cta.primary`. Venue names, host names,
+prices and booking references stay in Latin script in every locale.
+
+The web app resolves the locale from the signed-in profile, then a cookie, then
+Armenian; the phone app substitutes the device language for the cookie.
+
 ## Localisation and money
 
 Three locales ship from the start — `hy` (default), `en`, `ru` — and three display
@@ -185,6 +209,20 @@ server; display conversion happens at the edge using the rate table in
 `@zal/contracts/currency`. No float arithmetic touches money.
 
 ---
+
+## Known constraints
+
+- **Prisma needs network on first install.** `prisma generate` downloads its
+  query engine from `binaries.prisma.sh`. Any environment that blocks that host
+  cannot build `apps/api`, and the failure is a checksum or 403 error rather
+  than anything wrong with the schema. CI runs `prisma generate` before
+  typecheck for this reason.
+- **The workspace uses `node-linker=hoisted`.** React Native's tooling assumes a
+  flat `node_modules`, and several packages in the Expo stack import
+  dependencies they never declare. `.npmrc` explains the trade-off.
+- **`mcp.json` has a token in this repository's history.** It was replaced with
+  an environment reference, but a later commit cannot remove it from history —
+  that token should be treated as compromised and revoked.
 
 ## License
 
