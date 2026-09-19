@@ -3,6 +3,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -22,6 +23,8 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { throttlerOptions } from './config/throttler';
 
 /**
  * Cross-cutting concerns are registered once, globally:
@@ -36,7 +39,8 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env', '.env'] }),
-    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 120 }]),
+    ThrottlerModule.forRootAsync({ useFactory: throttlerOptions }),
+    ScheduleModule.forRoot(),
     JwtModule.register({}),
     PrismaModule,
     RealtimeModule,
@@ -52,6 +56,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     FavoritesModule,
     MessagesModule,
     UploadsModule,
+    TasksModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

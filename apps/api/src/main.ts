@@ -60,6 +60,7 @@ async function bootstrap(): Promise<void> {
     .addTag('venues')
     .addTag('bookings')
     .addTag('payments')
+    .addTag('host')
     .build();
 
   SwaggerModule.setup(

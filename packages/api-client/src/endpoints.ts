@@ -1,5 +1,9 @@
 import {
   authSessionSchema,
+  hostVenueSchema,
+  hostVenueSummarySchema,
+  presignRequestSchema,
+  presignResponseSchema,
   availabilityResponseSchema,
   bookingDetailSchema,
   bookingSummarySchema,
@@ -42,7 +46,19 @@ import {
   type SendMessageBody,
   type StartConversationBody,
   type UpdateNotificationPreferencesBody,
+  type AddVenuePhotoBody,
+  type BlockDatesBody,
+  type CreateVenueBody,
+  type ListHostBookingsQuery,
+  type ListHostVenuesQuery,
+  type PresignRequestBody,
+  type ReorderVenuePhotosBody,
+  type SetVenueAddOnsBody,
+  type SetVenuePricesBody,
+  type SetVenueStatusBody,
+  type UnblockDatesBody,
   type UpdateProfileBody,
+  type UpdateVenueBody,
   type VenueSearchQuery,
 } from '@zal/contracts';
 import { z } from 'zod';
@@ -387,6 +403,105 @@ export function createApi(client: ZalClient) {
           method: 'POST',
           body,
           schema: conversationSchema,
+        }),
+    },
+
+    uploads: {
+      /**
+       * Ask for permission to upload one file, then PUT the bytes straight to
+       * storage with the headers that come back — they are part of what was
+       * signed, so changing them invalidates the URL.
+       */
+      presign: (body: PresignRequestBody) =>
+        client.request(routes.uploads.presign(), {
+          method: 'POST',
+          body: presignRequestSchema.parse(body),
+          schema: presignResponseSchema,
+        }),
+    },
+
+    host: {
+      venues: (query: Partial<ListHostVenuesQuery> = {}) =>
+        client.request(routes.host.venues(), {
+          query: query as Record<string, unknown>,
+          schema: pageSchema(hostVenueSummarySchema),
+        }),
+
+      venue: (venueId: string) =>
+        client.request(routes.host.venue(venueId), { schema: hostVenueSchema }),
+
+      createVenue: (body: CreateVenueBody) =>
+        client.request(routes.host.venues(), { method: 'POST', body, schema: hostVenueSchema }),
+
+      updateVenue: (venueId: string, body: UpdateVenueBody) =>
+        client.request(routes.host.venue(venueId), {
+          method: 'PATCH',
+          body,
+          schema: hostVenueSchema,
+        }),
+
+      setStatus: (venueId: string, body: SetVenueStatusBody) =>
+        client.request(routes.host.venueStatus(venueId), {
+          method: 'PATCH',
+          body,
+          schema: hostVenueSchema,
+        }),
+
+      archiveVenue: (venueId: string) =>
+        client.request(routes.host.venue(venueId), { method: 'DELETE', schema: okSchema }),
+
+      setPrices: (venueId: string, body: SetVenuePricesBody) =>
+        client.request(routes.host.venuePrices(venueId), {
+          method: 'PUT',
+          body,
+          schema: hostVenueSchema,
+        }),
+
+      setAddOns: (venueId: string, body: SetVenueAddOnsBody) =>
+        client.request(routes.host.venueAddOns(venueId), {
+          method: 'PUT',
+          body,
+          schema: hostVenueSchema,
+        }),
+
+      addPhoto: (venueId: string, body: AddVenuePhotoBody) =>
+        client.request(routes.host.venuePhotos(venueId), {
+          method: 'POST',
+          body,
+          schema: hostVenueSchema,
+        }),
+
+      removePhoto: (venueId: string, photoId: string) =>
+        client.request(routes.host.venuePhoto(venueId, photoId), {
+          method: 'DELETE',
+          schema: hostVenueSchema,
+        }),
+
+      reorderPhotos: (venueId: string, body: ReorderVenuePhotosBody) =>
+        client.request(routes.host.venuePhotoOrder(venueId), {
+          method: 'PUT',
+          body,
+          schema: hostVenueSchema,
+        }),
+
+      blockDates: (venueId: string, body: BlockDatesBody) =>
+        client.request(routes.host.venueBlocks(venueId), {
+          method: 'POST',
+          body,
+          schema: z.object({ updated: z.number(), skipped: z.array(z.string()) }),
+        }),
+
+      unblockDates: (venueId: string, body: UnblockDatesBody) =>
+        client.request(routes.host.venueBlocks(venueId), {
+          method: 'DELETE',
+          body,
+          schema: z.object({ updated: z.number() }),
+        }),
+
+      bookings: (query: Partial<ListHostBookingsQuery> = {}) =>
+        client.request(routes.host.bookings(), {
+          query: query as Record<string, unknown>,
+          schema: pageSchema(bookingSummarySchema),
         }),
     },
   };

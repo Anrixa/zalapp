@@ -53,6 +53,15 @@ const envSchema = z.object({
 
   PAYMENTS_PROVIDER: z.enum(['mock', 'arca', 'idram', 'telcell']).default('mock'),
 
+  // Scheduled jobs. Exactly one process in a deployment should run them:
+  // two instances with the scheduler on would send every reminder twice.
+  ENABLE_SCHEDULER: z
+    .string()
+    .default('true')
+    .transform((value) => value !== 'false'),
+  // How long a booking may hold a date before the deposit arrives.
+  BOOKING_HOLD_MINUTES: z.coerce.number().int().positive().default(60),
+
   EXPO_ACCESS_TOKEN: z.string().optional(),
 });
 

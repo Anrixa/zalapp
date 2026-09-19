@@ -155,6 +155,64 @@ password and Google sign-in are also supported.
 
 ---
 
+## Hosting a venue
+
+Zal is self-serve. `POST /host/venues` creates a venue as a `DRAFT` and turns
+the caller into a host — becoming one is a side effect of having a hall to
+offer, not a separate sign-up. The host then sets prices, uploads photos and
+publishes it themselves.
+
+Publishing is refused while anything is missing. `publishBlockers` returns the
+checklist — no photos, an unpriced slot, a description too short to tell one
+hall from another — because a half-configured venue in search results is worse
+for the host than not being listed.
+
+| Endpoint | What |
+| --- | --- |
+| `POST/PATCH /host/venues[/:id]` | create and edit |
+| `PATCH /host/venues/:id/status` | publish, pause, unpublish |
+| `PUT /host/venues/:id/prices` | per-slot pricing, both slots at once |
+| `PUT /host/venues/:id/add-ons` | the extras offered at checkout |
+| `POST/DELETE /host/venues/:id/photos` | attach by storage key, reorder, remove |
+| `POST/DELETE /host/venues/:id/blocks` | close a date range, or price it differently |
+| `GET /host/bookings` | the host's work queue, soonest first |
+| `DELETE /host/venues/:id` | archive — refused while dates are still held |
+
+Two checks guard all of it: the `HOST` role says what kind of thing you may do,
+and an ownership check on every call says which rows you may do it to. A host
+with a valid token is still not allowed near another host's calendar. Closing a
+date somebody has booked is refused and reported rather than silently skipped.
+
+`VenueStatus` already carries the states a moderated flow would need, so
+switching to "an admin publishes" later is a change to one guard rather than a
+migration.
+
+## Scheduled work
+
+Four jobs, all idempotent, all in Asia/Yerevan — "the day after the event" has
+to mean the venue's day, not the server's:
+
+| Job | When | What |
+| --- | --- | --- |
+| `complete-past-bookings` | 00:15 daily | yesterday's confirmed bookings become completed, which unlocks reviewing them |
+| `balance-reminders` | 10:00 daily | guests whose balance falls due in 3 days, once each |
+| `expire-unpaid-holds` | every 30 min | releases dates held by a booking whose deposit never arrived |
+| `prune-expired-tokens` | 03:30 Sunday | drops refresh tokens that can no longer authenticate anything |
+
+`ENABLE_SCHEDULER=false` turns them off for a process. Exactly one instance in a
+deployment should run them — two would send every reminder twice.
+
+## Uploads
+
+`POST /uploads/presign` returns a URL that permits one PUT, of one content type,
+at one key, for fifteen minutes. The bytes go straight from the device to
+storage: a 10 MB photo should not occupy a Node process for the length of its
+upload, and a signature that expires is a permission that cannot be hoarded.
+
+The content type and size are part of what gets signed, so a client that asked
+to upload a 2 MB JPEG cannot then push a 40 MB video to the same URL. MinIO
+serves this locally and S3 or R2 in production — only the endpoint changes.
+
 ## Real-time
 
 `apps/api` exposes a Socket.IO gateway at `/realtime`. A client authenticates with its
@@ -217,6 +275,10 @@ server; display conversion happens at the edge using the rate table in
   cannot build `apps/api`, and the failure is a checksum or 403 error rather
   than anything wrong with the schema. CI runs `prisma generate` before
   typecheck for this reason.
+- **Rate limiting needs Redis to hold across instances.** With `REDIS_URL` set
+  the limits are shared; without it they are per process, which is correct for
+  a single instance and wrong behind a load balancer. The API logs which mode
+  it started in.
 - **The workspace uses `node-linker=hoisted`.** React Native's tooling assumes a
   flat `node_modules`, and several packages in the Expo stack import
   dependencies they never declare. `.npmrc` explains the trade-off.

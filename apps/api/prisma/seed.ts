@@ -283,6 +283,9 @@ async function main(): Promise<void> {
         hostProfileId: hosts[seed.host].id,
         name: seed.name,
         type: seed.type,
+        // Explicit, because the column now defaults to DRAFT: seeded venues
+        // are demo data and are meant to be visible.
+        status: 'PUBLISHED',
         description: seed.description,
         addressLine: seed.addressLine,
         district: seed.district,
@@ -294,7 +297,7 @@ async function main(): Promise<void> {
         areaSqm: seed.areaSqm,
         parkingSpots: seed.parkingSpots,
       },
-      update: { description: seed.description },
+      update: { description: seed.description, status: 'PUBLISHED' },
     });
 
     await prisma.venuePrice.upsert({

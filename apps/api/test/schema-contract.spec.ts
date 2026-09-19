@@ -15,6 +15,7 @@ import {
   PaymentStatus,
   TimeSlot,
   UserRole,
+  VenueStatus,
   VenueType,
 } from '@zal/contracts';
 
@@ -52,6 +53,7 @@ const PAIRS: [string, Record<string, string>][] = [
   ['Locale', Locale],
   ['Currency', Currency],
   ['VenueType', VenueType],
+  ['VenueStatus', VenueStatus],
   ['TimeSlot', TimeSlot],
   ['EventType', EventType],
   ['AvailabilityStatus', AvailabilityStatus],
@@ -76,7 +78,7 @@ describe('schema ↔ contract', () => {
     // A new Prisma enum that no contract mirrors is either an oversight or a
     // deliberately internal one; either way it should be a decision, not a
     // silent omission.
-    const internal = new Set(['VenueStatus', 'VerificationPurpose']);
+    const internal = new Set(['VerificationPurpose']);
     const declared = Object.keys(schemaEnums).filter((name) => !internal.has(name));
     const checked = PAIRS.map(([name]) => name);
 

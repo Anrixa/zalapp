@@ -316,7 +316,7 @@ model Venue {
   hostProfileId String
   name          String      @db.VarChar(160)
   type          VenueType
-  status        VenueStatus @default(PUBLISHED)
+  status        VenueStatus @default(DRAFT)
   description   String      @db.VarChar(4000)
 
   addressLine String  @db.VarChar(160)

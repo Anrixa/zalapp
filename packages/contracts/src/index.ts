@@ -17,6 +17,8 @@ export * from './auth';
 export * from './venue';
 export * from './booking';
 export * from './payment';
+export * from './upload';
+export * from './host';
 export * from './social';
 export * from './realtime';
 export * from './routes';

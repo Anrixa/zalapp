@@ -91,6 +91,24 @@ export const routes = {
   uploads: {
     presign: () => '/uploads/presign',
   },
+
+  /**
+   * Host-side management. Separate from the guest-facing `/venues` tree so the
+   * authorisation rule is visible in the URL: everything under `/host` requires
+   * the HOST role and ownership of the row being touched.
+   */
+  host: {
+    venues: () => '/host/venues',
+    venue: (venueId: string) => `/host/venues/${venueId}`,
+    venueStatus: (venueId: string) => `/host/venues/${venueId}/status`,
+    venuePrices: (venueId: string) => `/host/venues/${venueId}/prices`,
+    venueAddOns: (venueId: string) => `/host/venues/${venueId}/add-ons`,
+    venuePhotos: (venueId: string) => `/host/venues/${venueId}/photos`,
+    venuePhoto: (venueId: string, photoId: string) => `/host/venues/${venueId}/photos/${photoId}`,
+    venuePhotoOrder: (venueId: string) => `/host/venues/${venueId}/photos/order`,
+    venueBlocks: (venueId: string) => `/host/venues/${venueId}/blocks`,
+    bookings: () => '/host/bookings',
+  },
 } as const;
 
 export type Routes = typeof routes;

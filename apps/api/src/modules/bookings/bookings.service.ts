@@ -482,22 +482,6 @@ export class BookingsService {
     ].join('\r\n');
   }
 
-  /**
-   * Nightly sweep: yesterday's confirmed bookings become completed, which is
-   * what unlocks reviewing them.
-   */
-  async completePastBookings(): Promise<number> {
-    const { count } = await this.prisma.booking.updateMany({
-      where: {
-        status: BookingStatus.CONFIRMED,
-        eventDate: { lt: fromIsoDate(todayInYerevan()) },
-      },
-      data: { status: BookingStatus.COMPLETED },
-    });
-    if (count > 0) this.logger.log(`Marked ${count} booking(s) completed`);
-    return count;
-  }
-
   private async assertParticipant(
     booking: { userId: string; venueId: string },
     userId: string,
